@@ -3740,9 +3740,6 @@ intptr_t JSON_NODE::getUtf8Char(const char* pStr,
     //      0 if end-of-file was reached
     //      -1 if error in UTF-8 encoding
     
-    //SOURCE:
-    //      https://stackoverflow.com/q/4063146/843732
-    
     //    0x00000000 - 0x0000007F:
     //        0xxxxxxx
     //
