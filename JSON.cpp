@@ -24,61 +24,61 @@ int thread_local CJSON::g_tls_LastErr;
 
 int CJSON::parseJSON(LPCTSTR pStr, JSON_DATA& outJEs, JSON_ERROR* pJError)
 {
-	//Parse 'pStr' as JSON
-	//'outJEs' = receives parsed JSON data -- must be newly created
-	//'pJError' = if not nullptr, will be filled with parsing error details
-	//RETURN:
-	//		= 1 if got it OK
-	//		= 0 if JSON format error
-	//		= -1 if other non-JSON related error (such as out of memory, etc.)
+    //Parse 'pStr' as JSON
+    //'outJEs' = receives parsed JSON data -- must be newly created
+    //'pJError' = if not nullptr, will be filled with parsing error details
+    //RETURN:
+    //		= 1 if got it OK
+    //		= 0 if JSON format error
+    //		= -1 if other non-JSON related error (such as out of memory, etc.)
     //           INFO: Check CJSON::GetLastError() for more info.
-	int nRes = -1;
+    int nRes = -1;
 
-	if(pStr)
-	{
-		//Clear the data variable
-		outJEs.emptyData();
+    if(pStr)
+    {
+        //Clear the data variable
+        outJEs.emptyData();
 
-		//Begin
-		intptr_t i = 0;
-		intptr_t nLen = STRLEN(pStr);
+        //Begin
+        intptr_t i = 0;
+        intptr_t nLen = STRLEN(pStr);
 
-		//Reset last error before we begin
+        //Reset last error before we begin
         CJSON::SetLastError(0);
 
-		//Go to next non-white-space
-		WCHAR c = _skipWhiteSpaces(pStr, i, nLen);
-		if(c)
-		{
-			//Begin from the root object
-			nRes = _parseForValue(outJEs.val, pStr, i, nLen, pJError);
-			if(nRes == 1)
-			{
-				//Skip to the end
-				if(_skipWhiteSpaces(pStr, i, nLen) != 0)
-				{
-					//Something else follows { ... } main root object
-					ASSERT(nullptr);
-					_describeError(pJError, i, L("Unexpected data after the root node"));
-					nRes = 0;
-				}
-			}
-		}
-		else
-		{
-			//Error
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Unexpected EOF"));
-			nRes = 0;
-		}
-	}
-	else
-	{
-		_describeError(pJError, -1, L("Bad input parameter(s)"));
+        //Go to next non-white-space
+        WCHAR c = _skipWhiteSpaces(pStr, i, nLen);
+        if(c)
+        {
+            //Begin from the root object
+            nRes = _parseForValue(outJEs.val, pStr, i, nLen, pJError);
+            if(nRes == 1)
+            {
+                //Skip to the end
+                if(_skipWhiteSpaces(pStr, i, nLen) != 0)
+                {
+                    //Something else follows { ... } main root object
+                    ASSERT(nullptr);
+                    _describeError(pJError, i, L("Unexpected data after the root node"));
+                    nRes = 0;
+                }
+            }
+        }
+        else
+        {
+            //Error
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Unexpected EOF"));
+            nRes = 0;
+        }
+    }
+    else
+    {
+        _describeError(pJError, -1, L("Bad input parameter(s)"));
         CJSON::SetLastError(ERROR_INVALID_PARAMETER);
-	}
+    }
 
-	return nRes;
+    return nRes;
 }
 
 
@@ -86,60 +86,60 @@ int CJSON::parseJSON(LPCTSTR pStr, JSON_DATA& outJEs, JSON_ERROR* pJError)
 
 WCHAR CJSON::_skipWhiteSpaces(const WCHAR* pData, intptr_t& i, intptr_t nLen)
 {
-	//Update 'i' to point to the next non-white space WCHAR
-	//'pData' = beginning of JSON string to parse
-	//'i' = index of the WCHAR to begin skipping white spaces from
-	//		INFO: It will be updated upon return to point to the first non-space char on or after original 'i'
-	//'nLen' = length of 'pData' in TCHARs
-	//RETURN:
-	//		= Non-0 for the next non-white-space WCHAR on or after 'i' (and 'i' will point to this non-white-space char in 'pData')
-	//		= 0 if end-of-data is reached (and 'i' is out of scope)
-	for(; i < nLen; i++)
-	{
+    //Update 'i' to point to the next non-white space WCHAR
+    //'pData' = beginning of JSON string to parse
+    //'i' = index of the WCHAR to begin skipping white spaces from
+    //		INFO: It will be updated upon return to point to the first non-space char on or after original 'i'
+    //'nLen' = length of 'pData' in TCHARs
+    //RETURN:
+    //		= Non-0 for the next non-white-space WCHAR on or after 'i' (and 'i' will point to this non-white-space char in 'pData')
+    //		= 0 if end-of-data is reached (and 'i' is out of scope)
+    for(; i < nLen; i++)
+    {
         WCHAR z = pData[i];
-		ASSERT(z);
-		if(_isWhiteSpace(z))
-			continue;
+        ASSERT(z);
+        if(_isWhiteSpace(z))
+            continue;
 
-		return z;
-	}
+        return z;
+    }
 
-	//End of file
-	return 0;
+    //End of file
+    return 0;
 }
 
 
 
 int CJSON::_parseDoubleQuotedString(std_wstring& str, const WCHAR* pData, intptr_t& i, intptr_t nLen, JSON_ERROR* pJError)
 {
-	//Parse double quoted string into 'str'
-	//'pData' = beginning of JSON string to parse
-	//'i' = index of the '"' WCHAR to begin parsing the "string" from
-	//		INFO: It will be updated upon return to point to the char one after the last one in the "string"
-	//'nLen' = length of 'pData' in TCHARs
-	//RETURN:
-	//		= 1 if got it OK, 'i' points to the next WCHAR after the "string"
-	//		= 0 if format error, 'i' may be out of range
-	//		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
+    //Parse double quoted string into 'str'
+    //'pData' = beginning of JSON string to parse
+    //'i' = index of the '"' WCHAR to begin parsing the "string" from
+    //		INFO: It will be updated upon return to point to the char one after the last one in the "string"
+    //'nLen' = length of 'pData' in TCHARs
+    //RETURN:
+    //		= 1 if got it OK, 'i' points to the next WCHAR after the "string"
+    //		= 0 if format error, 'i' may be out of range
+    //		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
 
-	//Clear the string
-	str.clear();
+    //Clear the string
+    str.clear();
 
     WCHAR buffHex[5];
-	buffHex[SIZEOF(buffHex) - 1] = 0;
+    buffHex[SIZEOF(buffHex) - 1] = 0;
 
     intptr_t i_delta = 1;
     
-	//Fill out string
-	for(i++;; i += i_delta)
-	{
-		if(i >= nLen)
-		{
-			//Reached EOF
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Unexpected EOF"));
-			return 0;
-		}
+    //Fill out string
+    for(i++;; i += i_delta)
+    {
+        if(i >= nLen)
+        {
+            //Reached EOF
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Unexpected EOF"));
+            return 0;
+        }
 
 #ifdef _WIN32
 //Windows specific
@@ -159,93 +159,93 @@ int CJSON::_parseDoubleQuotedString(std_wstring& str, const WCHAR* pData, intptr
         }
 #endif
         
-		if(z == '"')
-		{
-			//End of string reached
-			i += i_delta;
+        if(z == '"')
+        {
+            //End of string reached
+            i += i_delta;
 
-			return 1;
-		}
-		else if(z == '\n' || z == '\r')
-		{
-			//Error in formatting
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Newline in quote"));
-			return 0;
-		}
-		else if(z == '\\')
-		{
-			//Escaping, get next char
-			i += i_delta;
+            return 1;
+        }
+        else if(z == '\n' || z == '\r')
+        {
+            //Error in formatting
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Newline in quote"));
+            return 0;
+        }
+        else if(z == '\\')
+        {
+            //Escaping, get next char
+            i += i_delta;
             
-			if(i >= nLen)
-			{
-				//Error
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Unexpected EOF"));
-				return 0;
-			}
+            if(i >= nLen)
+            {
+                //Error
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Unexpected EOF"));
+                return 0;
+            }
 
-			//Get next char, look for special cases
-			//%x22 /          ; "    quotation mark  U+0022
-			//%x5C /          ; \    reverse solidus U+005C
-			//%x2F /          ; /    solidus         U+002F
-			//%x62 /          ; b    backspace       U+0008
-			//%x66 /          ; f    form feed       U+000C
-			//%x6E /          ; n    line feed       U+000A
-			//%x72 /          ; r    carriage return U+000D
-			//%x74 /          ; t    tab             U+0009
-			//%x75 4HEXDIG )  ; uXXXX                U+XXXX
-			ASSERT('\b' == 0x0008);
-			ASSERT('\f' == 0x000C);
-			ASSERT('\n' == 0x000A);
-			ASSERT('\r' == 0x000D);
-			ASSERT('\t' == 0x0009);
+            //Get next char, look for special cases
+            //%x22 /          ; "    quotation mark  U+0022
+            //%x5C /          ; \    reverse solidus U+005C
+            //%x2F /          ; /    solidus         U+002F
+            //%x62 /          ; b    backspace       U+0008
+            //%x66 /          ; f    form feed       U+000C
+            //%x6E /          ; n    line feed       U+000A
+            //%x72 /          ; r    carriage return U+000D
+            //%x74 /          ; t    tab             U+0009
+            //%x75 4HEXDIG )  ; uXXXX                U+XXXX
+            ASSERT('\b' == 0x0008);
+            ASSERT('\f' == 0x000C);
+            ASSERT('\n' == 0x000A);
+            ASSERT('\r' == 0x000D);
+            ASSERT('\t' == 0x0009);
 
-			z = pData[i];
-			if(z == '"' ||
-				z == '\\' ||
-				z == '/')
-			{
-				//Keep it as is
-			}
-			else if(z == 'b')
-			{
-				z = '\b';
-			}
-			else if(z == 'f')
-			{
-				z = '\f';
-			}
-			else if(z == 'n')
-			{
-				z = '\n';
-			}
-			else if(z == 'r')
-			{
-				z = '\r';
-			}
-			else if(z == 't')
-			{
-				z = '\t';
-			}
-			else if(z == 'u')
-			{
-				//\u005C
-				if(i + 4 >= nLen)
-				{
-					//Error
-					ASSERT(nullptr);
-					_describeError(pJError, i, L("Unexpected EOF"));
-					return 0;
-				}
+            z = pData[i];
+            if(z == '"' ||
+                z == '\\' ||
+                z == '/')
+            {
+                //Keep it as is
+            }
+            else if(z == 'b')
+            {
+                z = '\b';
+            }
+            else if(z == 'f')
+            {
+                z = '\f';
+            }
+            else if(z == 'n')
+            {
+                z = '\n';
+            }
+            else if(z == 'r')
+            {
+                z = '\r';
+            }
+            else if(z == 't')
+            {
+                z = '\t';
+            }
+            else if(z == 'u')
+            {
+                //\u005C
+                if(i + 4 >= nLen)
+                {
+                    //Error
+                    ASSERT(nullptr);
+                    _describeError(pJError, i, L("Unexpected EOF"));
+                    return 0;
+                }
 
-				buffHex[0] = pData[++i];
-				buffHex[1] = pData[++i];
-				buffHex[2] = pData[++i];
-				buffHex[3] = pData[++i];
+                buffHex[0] = pData[++i];
+                buffHex[1] = pData[++i];
+                buffHex[2] = pData[++i];
+                buffHex[3] = pData[++i];
 
-				UINT uZ = 0;
+                UINT uZ = 0;
 
 #ifdef _WIN32
 //Windows specific
@@ -273,18 +273,18 @@ int CJSON::_parseDoubleQuotedString(std_wstring& str, const WCHAR* pData, intptr
                 
                 z = uZ;
 #endif
-			}
-			else
-			{
-				//Technically an error = but don't quit
-				ASSERT(nullptr);		//Bad escaping
-			}
-		}
+            }
+            else
+            {
+                //Technically an error = but don't quit
+                ASSERT(nullptr);		//Bad escaping
+            }
+        }
 
-		//Add it to name
+        //Add it to name
 #ifdef _WIN32
 //Windows specific
-		str += z;
+        str += z;
         
 #elif __APPLE__
 //macOS specific
@@ -298,95 +298,95 @@ int CJSON::_parseDoubleQuotedString(std_wstring& str, const WCHAR* pData, intptr
 #endif
     }
 
-	ASSERT(nullptr);
-	_describeError(pJError, i, L("Bad execution branch"));
+    ASSERT(nullptr);
+    _describeError(pJError, i, L("Bad execution branch"));
     CJSON::SetLastError(ERROR_HANDLE_EOF);
-	return -1;
+    return -1;
 }
 
 
 int CJSON::_parseForArray(JSON_ARRAY& ja, const WCHAR* pData, intptr_t& i, intptr_t nLen, JSON_ERROR* pJError)
 {
-	//Parse for array
-	//'ja' = array to parse into -- must be freshly created
-	//'pData' = beginning of JSON string to parse
-	//'i' = index of the WCHAR to begin parsing from (may be space) -- must be the char right after the opening '['
-	//		INFO: It will be updated upon return to point to the char one after the last one in the array, i.e. ']'
-	//'nLen' = length of 'pData' in TCHARs
-	//RETURN:
-	//		= 1 if got it OK, 'i' points to the next WCHAR after the value
-	//		= 0 if format error, 'i' may be out of range
-	//		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
-	int nR;
+    //Parse for array
+    //'ja' = array to parse into -- must be freshly created
+    //'pData' = beginning of JSON string to parse
+    //'i' = index of the WCHAR to begin parsing from (may be space) -- must be the char right after the opening '['
+    //		INFO: It will be updated upon return to point to the char one after the last one in the array, i.e. ']'
+    //'nLen' = length of 'pData' in TCHARs
+    //RETURN:
+    //		= 1 if got it OK, 'i' points to the next WCHAR after the value
+    //		= 0 if format error, 'i' may be out of range
+    //		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
+    int nR;
 
-	bool bGotPreviousComma = true;
+    bool bGotPreviousComma = true;
 
-	for(intptr_t cnt = 0;; cnt++)
-	{
-		//Go to next non-white-space
+    for(intptr_t cnt = 0;; cnt++)
+    {
+        //Go to next non-white-space
         WCHAR c = _skipWhiteSpaces(pData, i, nLen);
-		if(!c)
-		{
-			//Reached EOF too early
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Unexpected EOF"));
-			return 0;
-		}
+        if(!c)
+        {
+            //Reached EOF too early
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Unexpected EOF"));
+            return 0;
+        }
 
-		if(c == ']')
-		{
-			//End of array
-			i++;
+        if(c == ']')
+        {
+            //End of array
+            i++;
 
-			return 1;
-		}
-		else if(c == ',')
-		{
-			//Comma separator between elements (only if not the first element)
-			if(cnt == 0 ||
-				bGotPreviousComma)
-			{
-				//Error
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Unexpected comma"));
-				return 0;
-			}
+            return 1;
+        }
+        else if(c == ',')
+        {
+            //Comma separator between elements (only if not the first element)
+            if(cnt == 0 ||
+                bGotPreviousComma)
+            {
+                //Error
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Unexpected comma"));
+                return 0;
+            }
 
-			//Signal that we got it
-			bGotPreviousComma = true;
+            //Signal that we got it
+            bGotPreviousComma = true;
 
-			//Otherwise skip it
-			i++;
-			continue;
-		}
+            //Otherwise skip it
+            i++;
+            continue;
+        }
 
-		//Make sure that we've got a comma before
-		if(!bGotPreviousComma)
-		{
-			//Error - missing comma
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Expected a comma"));
-			return 0;
-		}
+        //Make sure that we've got a comma before
+        if(!bGotPreviousComma)
+        {
+            //Error - missing comma
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Expected a comma"));
+            return 0;
+        }
 
-		JSON_ARRAY_ELEMENT jae;
+        JSON_ARRAY_ELEMENT jae;
 
-		//Parse value
-		nR = _parseForValue(jae.val, pData, i, nLen, pJError);
-		if(nR != 1)
-		{
-			//Error
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Value parsing failed"));
-			return nR;
-		}
+        //Parse value
+        nR = _parseForValue(jae.val, pData, i, nLen, pJError);
+        if(nR != 1)
+        {
+            //Error
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Value parsing failed"));
+            return nR;
+        }
 
-		//Add it
-		ja.arrArrElmts.push_back(jae);
+        //Add it
+        ja.arrArrElmts.push_back(jae);
 
-		//Reset comma flag
-		bGotPreviousComma = false;
-	}
+        //Reset comma flag
+        bGotPreviousComma = false;
+    }
 
 //	_describeError(pJError, i, L("Bad execution branch"));
 //    CJSON::SetLastError(ERROR_INVALID_DATA);
@@ -397,137 +397,137 @@ int CJSON::_parseForArray(JSON_ARRAY& ja, const WCHAR* pData, intptr_t& i, intpt
 
 int CJSON::_parseForObject(JSON_OBJECT& jo, const WCHAR* pData, intptr_t& i, intptr_t nLen, JSON_ERROR* pJError)
 {
-	//Parse for object
-	//'jo' = object to parse into -- must be freshly created
-	//'pData' = beginning of JSON string to parse
-	//'i' = index of the WCHAR to begin parsing from (may be space) -- must be the char right after the opening '{'
-	//		INFO: It will be updated upon return to point to the char one after the last one in the object, i.e. '}'
-	//'nLen' = length of 'pData' in TCHARs
-	//RETURN:
-	//		= 1 if got it OK, 'i' points to the next WCHAR after the object
-	//		= 0 if format error, 'i' may be out of range
-	//		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
-	int nR;
+    //Parse for object
+    //'jo' = object to parse into -- must be freshly created
+    //'pData' = beginning of JSON string to parse
+    //'i' = index of the WCHAR to begin parsing from (may be space) -- must be the char right after the opening '{'
+    //		INFO: It will be updated upon return to point to the char one after the last one in the object, i.e. '}'
+    //'nLen' = length of 'pData' in TCHARs
+    //RETURN:
+    //		= 1 if got it OK, 'i' points to the next WCHAR after the object
+    //		= 0 if format error, 'i' may be out of range
+    //		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
+    int nR;
 
     bool bGotPreviousComma = true;
 
-	for(intptr_t cnt = 0;; cnt++)
-	{
-		//Go to next non-white-space
+    for(intptr_t cnt = 0;; cnt++)
+    {
+        //Go to next non-white-space
         WCHAR c = _skipWhiteSpaces(pData, i, nLen);
-		if(!c)
-		{
-			//Reached EOF too early
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Unexpected EOF"));
-			return 0;
-		}
+        if(!c)
+        {
+            //Reached EOF too early
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Unexpected EOF"));
+            return 0;
+        }
 
-		if(c == '}')
-		{
-			//End of object
-			i++;
+        if(c == '}')
+        {
+            //End of object
+            i++;
 
-			return 1;
-		}
-		else if(c == ',')
-		{
-			//Comma separator between elements (only if not the first element)
-			if(cnt == 0 ||
-				bGotPreviousComma)
-			{
-				//Error
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Unexpected comma"));
-				return 0;
-			}
+            return 1;
+        }
+        else if(c == ',')
+        {
+            //Comma separator between elements (only if not the first element)
+            if(cnt == 0 ||
+                bGotPreviousComma)
+            {
+                //Error
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Unexpected comma"));
+                return 0;
+            }
 
-			//Signal that we got it
-			bGotPreviousComma = true;
+            //Signal that we got it
+            bGotPreviousComma = true;
 
-			//Otherwise skip it
-			i++;
-			continue;
-		}
-		else if(c == '"')
-		{
-			//Name
+            //Otherwise skip it
+            i++;
+            continue;
+        }
+        else if(c == '"')
+        {
+            //Name
 
-			//Make sure that we've got a comma before
-			if(!bGotPreviousComma)
-			{
-				//Error - missing comma
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Expected a comma"));
-				return 0;
-			}
+            //Make sure that we've got a comma before
+            if(!bGotPreviousComma)
+            {
+                //Error - missing comma
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Expected a comma"));
+                return 0;
+            }
 
-			JSON_OBJECT_ELEMENT joe;
+            JSON_OBJECT_ELEMENT joe;
 
-			//Parse name
-			nR = _parseDoubleQuotedString(joe.strName, pData, i, nLen, pJError);
-			if(nR != 1)
-			{
-				//Error
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Quote parsing failed"));
-				return nR;
-			}
-			
-			//Go to next non-white-space
-			c = _skipWhiteSpaces(pData, i, nLen);
-			if(!c)
-			{
-				//Reached EOF too early
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Unexpected EOF"));
-				return 0;
-			}
+            //Parse name
+            nR = _parseDoubleQuotedString(joe.strName, pData, i, nLen, pJError);
+            if(nR != 1)
+            {
+                //Error
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Quote parsing failed"));
+                return nR;
+            }
+            
+            //Go to next non-white-space
+            c = _skipWhiteSpaces(pData, i, nLen);
+            if(!c)
+            {
+                //Reached EOF too early
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Unexpected EOF"));
+                return 0;
+            }
 
-			if(c != ':')
-			{
-				//Wrong format
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Expected a colon"));
-				return 0;
-			}
-			
-			i++;
+            if(c != ':')
+            {
+                //Wrong format
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Expected a colon"));
+                return 0;
+            }
+            
+            i++;
 
-			//Go to next non-white-space
-			c = _skipWhiteSpaces(pData, i, nLen);
-			if(!c)
-			{
-				//Reached EOF too early
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Unexpected EOF"));
-				return 0;
-			}
+            //Go to next non-white-space
+            c = _skipWhiteSpaces(pData, i, nLen);
+            if(!c)
+            {
+                //Reached EOF too early
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Unexpected EOF"));
+                return 0;
+            }
 
-			//Parse value
-			nR = _parseForValue(joe.val, pData, i, nLen, pJError);
-			if(nR != 1)
-			{
-				//Error
-				ASSERT(nullptr);
-				_describeError(pJError, i, L("Value parsing failed"));
-				return nR;
-			}
+            //Parse value
+            nR = _parseForValue(joe.val, pData, i, nLen, pJError);
+            if(nR != 1)
+            {
+                //Error
+                ASSERT(nullptr);
+                _describeError(pJError, i, L("Value parsing failed"));
+                return nR;
+            }
 
-			//Add it to the object
-			jo.arrObjElmts.push_back(joe);
+            //Add it to the object
+            jo.arrObjElmts.push_back(joe);
 
-			//Reset comma flag
-			bGotPreviousComma = false;
-		}
-		else
-		{
-			//Error
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Unexpected formatting character"));
-			return 0;
-		}
-	}
+            //Reset comma flag
+            bGotPreviousComma = false;
+        }
+        else
+        {
+            //Error
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Unexpected formatting character"));
+            return 0;
+        }
+    }
 
 //    CJSON::SetLastError(ERROR_INVALID_DATA);
 //	return -1;
@@ -536,25 +536,25 @@ int CJSON::_parseForObject(JSON_OBJECT& jo, const WCHAR* pData, intptr_t& i, int
 
 int CJSON::_parseForValue(JSON_VALUE& jv, const WCHAR* pData, intptr_t& i, intptr_t nLen, JSON_ERROR* pJError)
 {
-	//Parse for value in "name" : "value" JSON pair
-	//'jv' = will be filled out with the value
-	//'pData' = beginning of JSON string to parse
-	//'i' = index of the WCHAR right after ':' in the example above -- it will be updated upon return to point to the char one after last in the "value"
-	//'nLen' = length of 'pData' in TCHARs
-	//RETURN:
-	//		= 1 if got it OK, 'i' points to the next WCHAR after the "value"
-	//		= 0 if format error, 'i' may be out of range
-	//		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
-	int nR;
+    //Parse for value in "name" : "value" JSON pair
+    //'jv' = will be filled out with the value
+    //'pData' = beginning of JSON string to parse
+    //'i' = index of the WCHAR right after ':' in the example above -- it will be updated upon return to point to the char one after last in the "value"
+    //'nLen' = length of 'pData' in TCHARs
+    //RETURN:
+    //		= 1 if got it OK, 'i' points to the next WCHAR after the "value"
+    //		= 0 if format error, 'i' may be out of range
+    //		= -1 if other non-JSON related error (such as out of memory, check CJSON::GetLastError() for info)
+    int nR;
 
-	//Go to next non-white-space
-	if(!_skipWhiteSpaces(pData, i, nLen))
-	{
-		//Reached EOF too early
-		ASSERT(nullptr);
-		_describeError(pJError, i, L("Unexpected EOF"));
-		return 0;
-	}
+    //Go to next non-white-space
+    if(!_skipWhiteSpaces(pData, i, nLen))
+    {
+        //Reached EOF too early
+        ASSERT(nullptr);
+        _describeError(pJError, i, L("Unexpected EOF"));
+        return 0;
+    }
 
     intptr_t i_delta;
     
@@ -579,37 +579,37 @@ int CJSON::_parseForValue(JSON_VALUE& jv, const WCHAR* pData, intptr_t& i, intpt
 
 #endif
 
-	//See what type of value is it
-	if(c == '"')
-	{
-		//Begin quoted value
-		jv.valType = JVT_DOUBLE_QUOTED;
+    //See what type of value is it
+    if(c == '"')
+    {
+        //Begin quoted value
+        jv.valType = JVT_DOUBLE_QUOTED;
 
-		//Parse it
-		nR = _parseDoubleQuotedString(jv.strValue, pData, i, nLen, pJError);
-		if(nR != 1)
-		{
-			//Failed
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Quote parsing failed"));
-			return nR;
-		}
+        //Parse it
+        nR = _parseDoubleQuotedString(jv.strValue, pData, i, nLen, pJError);
+        if(nR != 1)
+        {
+            //Failed
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Quote parsing failed"));
+            return nR;
+        }
 
-	}
-	else if(_isPlainValueChar(c))
-	{
-		//Begin plain value
-		jv.valType = JVT_PLAIN;
-		jv.strValue = c;
+    }
+    else if(_isPlainValueChar(c))
+    {
+        //Begin plain value
+        jv.valType = JVT_PLAIN;
+        jv.strValue = c;
 
-		//Look for the end
-		for(i += i_delta; ; i += i_delta)
-		{
-			if(i >= nLen)
-			{
-				//Reached EOF, it's OK
-				break;
-			}
+        //Look for the end
+        for(i += i_delta; ; i += i_delta)
+        {
+            if(i >= nLen)
+            {
+                //Reached EOF, it's OK
+                break;
+            }
 
 #ifdef _WIN32
 //Windows specific
@@ -630,22 +630,22 @@ int CJSON::_parseForValue(JSON_VALUE& jv, const WCHAR* pData, intptr_t& i, intpt
             }
 #endif
 
-			if(_isWhiteSpace(z) ||
-				z == ',' ||
-				z == '}' ||
-				z == ']')
-			{
-				//End of value
-				break;
-			}
+            if(_isWhiteSpace(z) ||
+                z == ',' ||
+                z == '}' ||
+                z == ']')
+            {
+                //End of value
+                break;
+            }
 
-			//Chars must be formatted correctly
-			ASSERT(_isPlainValueChar(z));
+            //Chars must be formatted correctly
+            ASSERT(_isPlainValueChar(z));
 
 #ifdef _WIN32
 //Windows specific
     
-			jv.strValue += z;
+            jv.strValue += z;
             
 #elif __APPLE__
 //macOS specific
@@ -658,443 +658,443 @@ int CJSON::_parseForValue(JSON_VALUE& jv, const WCHAR* pData, intptr_t& i, intpt
                 return 0;
             }
 #endif
-		}
-	}
-	else if(c == '[')
-	{
-		//Begain array
-		jv.strValue.clear();
+        }
+    }
+    else if(c == '[')
+    {
+        //Begain array
+        jv.strValue.clear();
 
-		i += i_delta;
+        i += i_delta;
 
-		//Create new array
-		JSON_ARRAY* pJA = new (std::nothrow) JSON_ARRAY;
-		if(!pJA)
-		{
-			//Out of memory
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Out of memory"));
+        //Create new array
+        JSON_ARRAY* pJA = new (std::nothrow) JSON_ARRAY;
+        if(!pJA)
+        {
+            //Out of memory
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Out of memory"));
             CJSON::SetLastError(ERROR_OUTOFMEMORY);
-			return -1;
-		}
+            return -1;
+        }
 
-		//Parse it
-		nR = _parseForArray(*pJA, pData, i, nLen, pJError);
-		if(nR != 1)
-		{
-			//Error
-			int nErr = CJSON::GetLastError();
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Array parsing failed"));
+        //Parse it
+        nR = _parseForArray(*pJA, pData, i, nLen, pJError);
+        if(nR != 1)
+        {
+            //Error
+            int nErr = CJSON::GetLastError();
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Array parsing failed"));
 
-			//Delete it
-			_freeJSON_ARRAY(pJA);
+            //Delete it
+            _freeJSON_ARRAY(pJA);
 
             CJSON::SetLastError(nErr);
-			return nR;
-		}
+            return nR;
+        }
 
-		//Mark it
-		jv.valType = JVT_ARRAY;
+        //Mark it
+        jv.valType = JVT_ARRAY;
 
-		//Add it then
-		jv.pValue = pJA;
-	}
-	else if(c == '{')
-	{
-		//Begin object
-		jv.strValue.clear();
+        //Add it then
+        jv.pValue = pJA;
+    }
+    else if(c == '{')
+    {
+        //Begin object
+        jv.strValue.clear();
 
-		i += i_delta;
+        i += i_delta;
 
-		//Create new object
-		JSON_OBJECT* pJO = new (std::nothrow) JSON_OBJECT;
-		if(!pJO)
-		{
-			//Out of memory
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Out of memory"));
+        //Create new object
+        JSON_OBJECT* pJO = new (std::nothrow) JSON_OBJECT;
+        if(!pJO)
+        {
+            //Out of memory
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Out of memory"));
             CJSON::SetLastError(ERROR_OUTOFMEMORY);
-			return -1;
-		}
+            return -1;
+        }
 
-		//Parse it
-		nR = _parseForObject(*pJO, pData, i, nLen, pJError);
-		if(nR != 1)
-		{
-			//Error
-			int nErr = CJSON::GetLastError();
-			ASSERT(nullptr);
-			_describeError(pJError, i, L("Object parsing failed"));
+        //Parse it
+        nR = _parseForObject(*pJO, pData, i, nLen, pJError);
+        if(nR != 1)
+        {
+            //Error
+            int nErr = CJSON::GetLastError();
+            ASSERT(nullptr);
+            _describeError(pJError, i, L("Object parsing failed"));
 
-			//Delete it then
-			_freeJSON_OBJECT(pJO);
+            //Delete it then
+            _freeJSON_OBJECT(pJO);
 
             CJSON::SetLastError(nErr);
-			return nR;
-		}
+            return nR;
+        }
 
-		//Mark it
-		jv.valType = JVT_OBJECT;
+        //Mark it
+        jv.valType = JVT_OBJECT;
 
-		//Add it then
-		jv.pValue = pJO;
-	}
-	else
-	{
-		//Error in format
-		ASSERT(nullptr);
-		_describeError(pJError, i, L("Unexpected formatting character"));
-		return 0;
-	}
+        //Add it then
+        jv.pValue = pJO;
+    }
+    else
+    {
+        //Error in format
+        ASSERT(nullptr);
+        _describeError(pJError, i, L("Unexpected formatting character"));
+        return 0;
+    }
 
-	return 1;
+    return 1;
 }
 
 
 bool JSON_DATA::json_toString(JSON_DATA* pJE, JSON_FORMATTING* pJFormat, std_wstring* pOutStr)
 {
-	//Redirect
-	return CJSON::toString(pJE, pJFormat, pOutStr);
+    //Redirect
+    return CJSON::toString(pJE, pJFormat, pOutStr);
 }
 
 bool CJSON::toString(JSON_DATA* pJE, JSON_FORMATTING* pJFormat, std_wstring* pOutStr)
 {
-	//Convert 'pJE' to JSON string
-	//'pJFormat' = if not nullptr, formatting to use for JSON, or nullptr to use defaults
-	//'pOutStr' = if not nullptr, receives formatted JSON (if nullptr, can be used to check correctness of data in 'pJE')
-	//RETURN:
-	//		= true if success
-	//		= false if error (check CJSON::GetLastError() for info)
+    //Convert 'pJE' to JSON string
+    //'pJFormat' = if not nullptr, formatting to use for JSON, or nullptr to use defaults
+    //'pOutStr' = if not nullptr, receives formatted JSON (if nullptr, can be used to check correctness of data in 'pJE')
+    //RETURN:
+    //		= true if success
+    //		= false if error (check CJSON::GetLastError() for info)
     bool bRes = false;
-	int nOSError = NO_ERROR;
+    int nOSError = NO_ERROR;
 
-	if(pJE)
-	{
-		//Do we have a formatting struct
-		JSON_FORMATTING jFmt;
-		if(!pJFormat)
-		{
-			//Use defaults
-			pJFormat = &jFmt;
-		}
+    if(pJE)
+    {
+        //Do we have a formatting struct
+        JSON_FORMATTING jFmt;
+        if(!pJFormat)
+        {
+            //Use defaults
+            pJFormat = &jFmt;
+        }
 
-		//Empty string
-		if(pOutStr)
-			pOutStr->clear();
+        //Empty string
+        if(pOutStr)
+            pOutStr->clear();
 
-		//Measure how much data do we need
-		//INFO: We need this to speed up _toString_Value() method!
-		//		If 'pOutStr' == nullptr then:
-		//			0 if success
-		//			-1 if error
-		//		If 'pOutStr' != nullptr then:
-		//			[0 and up) number of TCHARs required for this value
-		//			-1 if error
+        //Measure how much data do we need
+        //INFO: We need this to speed up _toString_Value() method!
+        //		If 'pOutStr' == nullptr then:
+        //			0 if success
+        //			-1 if error
+        //		If 'pOutStr' != nullptr then:
+        //			[0 and up) number of TCHARs required for this value
+        //			-1 if error
         size_t n_res_cnt = _toString_Value(pJE->val, pJFormat, nullptr, 1);
 
-		if(n_res_cnt != -1)
-		{
-			//Only if we have a pointer
-			if(pOutStr)
-			{
-				//And print
+        if(n_res_cnt != -1)
+        {
+            //Only if we have a pointer
+            if(pOutStr)
+            {
+                //And print
                 size_t n_res_cnt2 = _toString_Value(pJE->val, pJFormat, pOutStr, 1);
-				if(n_res_cnt2 != -1)
-				{
-					//Check that we calculate the size correctly
-					//INFO: It is OK if we miscalculated it a little bit...
+                if(n_res_cnt2 != -1)
+                {
+                    //Check that we calculate the size correctly
+                    //INFO: It is OK if we miscalculated it a little bit...
                     size_t nCntStrChk = pOutStr->size();
-					ASSERT(nCntStrChk == n_res_cnt);
+                    ASSERT(nCntStrChk == n_res_cnt);
 
-					//Done
-					bRes = true;
-				}
-				else
-				{
-					//Error
-					nOSError = ERROR_BAD_FORMAT;
-					pOutStr->clear();
-				}
-			}
-			else
-			{
-				//Then success
-				bRes = true;
-			}
-		}
-		else
-		{
-			//Failed
-			nOSError = ERROR_BAD_FORMAT;
+                    //Done
+                    bRes = true;
+                }
+                else
+                {
+                    //Error
+                    nOSError = ERROR_BAD_FORMAT;
+                    pOutStr->clear();
+                }
+            }
+            else
+            {
+                //Then success
+                bRes = true;
+            }
+        }
+        else
+        {
+            //Failed
+            nOSError = ERROR_BAD_FORMAT;
 
-			if(pOutStr)
-			{
-				//If failed, clear the string
-				pOutStr->clear();
-			}
-		}
-	}
-	else
-		nOSError = ERROR_INVALID_PARAMETER;
+            if(pOutStr)
+            {
+                //If failed, clear the string
+                pOutStr->clear();
+            }
+        }
+    }
+    else
+        nOSError = ERROR_INVALID_PARAMETER;
 
     CJSON::SetLastError(nOSError);
-	return bRes;
+    return bRes;
 }
 
 
 size_t CJSON::_toString_Value(JSON_VALUE& val, JSON_FORMATTING* pJFormat, std_wstring* pOutStr, intptr_t nIndent)
 {
-	//RETURN:
-	//		If 'pOutStr' == nullptr then:
-	//			0 if success
-	//			-1 if error
-	//		If 'pOutStr' != nullptr then:
-	//			[0 and up) number of TCHARs required for this value
-	//			-1 if error
+    //RETURN:
+    //		If 'pOutStr' == nullptr then:
+    //			0 if success
+    //			-1 if error
+    //		If 'pOutStr' != nullptr then:
+    //			[0 and up) number of TCHARs required for this value
+    //			-1 if error
     size_t nResCount = 0;
-	
+    
     std_wstring strTabIndent, strTabIndent_1;
     bool bHumanReadable = pJFormat->bHumanReadable;
-	if(bHumanReadable)
-	{
-		//Prep tab index
+    if(bHumanReadable)
+    {
+        //Prep tab index
         std_wstring strTab;
-		if(pJFormat->spacesType == JSP_USE_SPACES)
-		{
-			int nNmSps = pJFormat->nSpacesPerTab;
-			if(nNmSps < 1)
-				nNmSps = 1;
-			else if(nNmSps > 64)
-				nNmSps = 64;
+        if(pJFormat->spacesType == JSP_USE_SPACES)
+        {
+            int nNmSps = pJFormat->nSpacesPerTab;
+            if(nNmSps < 1)
+                nNmSps = 1;
+            else if(nNmSps > 64)
+                nNmSps = 64;
 
-			for(int s = 0; s < nNmSps; s++)
-			{
-				strTab += ' ';
-			}
-		}
-		else
-			strTab = '\t';
+            for(int s = 0; s < nNmSps; s++)
+            {
+                strTab += ' ';
+            }
+        }
+        else
+            strTab = '\t';
 
-		for(intptr_t t = 0; t < nIndent - 1; t++)
-		{
-			strTabIndent_1 += strTab;
-		}
+        for(intptr_t t = 0; t < nIndent - 1; t++)
+        {
+            strTabIndent_1 += strTab;
+        }
 
-		strTabIndent = strTabIndent_1 + strTab;
-	}
+        strTabIndent = strTabIndent_1 + strTab;
+    }
 
-	switch(val.valType)
-	{
-	case JVT_PLAIN:					// 25, 167.6, 12E40, -12, +12, true, false, null
-		{
-			if(pOutStr)
-				pOutStr->operator +=(val.strValue);
-			else
-				nResCount += val.strValue.size();
-		}
-		break;
+    switch(val.valType)
+    {
+    case JVT_PLAIN:					// 25, 167.6, 12E40, -12, +12, true, false, null
+        {
+            if(pOutStr)
+                pOutStr->operator +=(val.strValue);
+            else
+                nResCount += val.strValue.size();
+        }
+        break;
 
-	case JVT_DOUBLE_QUOTED:			// "string"
-		{
-			if(pOutStr)
-			{
-				pOutStr->operator +=('"');
-				_escapeDoubleQuotedVal(val.strValue, pJFormat, pOutStr);
-				pOutStr->operator +=('"');
-			}
-			else
-			{
-				nResCount += 2 + _escapeDoubleQuotedVal(val.strValue, pJFormat);
-			}
-		}
-		break;
+    case JVT_DOUBLE_QUOTED:			// "string"
+        {
+            if(pOutStr)
+            {
+                pOutStr->operator +=('"');
+                _escapeDoubleQuotedVal(val.strValue, pJFormat, pOutStr);
+                pOutStr->operator +=('"');
+            }
+            else
+            {
+                nResCount += 2 + _escapeDoubleQuotedVal(val.strValue, pJFormat);
+            }
+        }
+        break;
 
-	case JVT_ARRAY:					// [ val1, val2 ]
-		{
-			if(pOutStr)
-			{
-				pOutStr->operator +=('[');
-			}
-			else
-				nResCount += 1;
+    case JVT_ARRAY:					// [ val1, val2 ]
+        {
+            if(pOutStr)
+            {
+                pOutStr->operator +=('[');
+            }
+            else
+                nResCount += 1;
 
-			JSON_ARRAY* pJA = (JSON_ARRAY*)val.pValue;
-			if(pJA)
-			{
-				intptr_t nCnt = pJA->arrArrElmts.size();
-				for(intptr_t i = 0; i < nCnt; i++)
-				{
-					//Print each element
-					size_t n_res_chrsA = _toString_Value(pJA->arrArrElmts[i].val, pJFormat, pOutStr, nIndent);
-					if(n_res_chrsA != -1)
-					{
-						//Add to other value
-						nResCount += n_res_chrsA;
-					}
-					else
-					{
-						//Failed
-						ASSERT(nullptr);
-						nResCount = -1;
-						break;
-					}
+            JSON_ARRAY* pJA = (JSON_ARRAY*)val.pValue;
+            if(pJA)
+            {
+                intptr_t nCnt = pJA->arrArrElmts.size();
+                for(intptr_t i = 0; i < nCnt; i++)
+                {
+                    //Print each element
+                    size_t n_res_chrsA = _toString_Value(pJA->arrArrElmts[i].val, pJFormat, pOutStr, nIndent);
+                    if(n_res_chrsA != -1)
+                    {
+                        //Add to other value
+                        nResCount += n_res_chrsA;
+                    }
+                    else
+                    {
+                        //Failed
+                        ASSERT(nullptr);
+                        nResCount = -1;
+                        break;
+                    }
 
-					if(i + 1 < nCnt)
-					{
-						//Add comma
-						if(pOutStr)
-							pOutStr->operator +=(',');
-						else
-							nResCount += 1;
+                    if(i + 1 < nCnt)
+                    {
+                        //Add comma
+                        if(pOutStr)
+                            pOutStr->operator +=(',');
+                        else
+                            nResCount += 1;
 
-						if(bHumanReadable)
-						{
-							if(pOutStr)
-								pOutStr->operator +=(' ');
-							else
-								nResCount += 1;
-						}
-					}
-				}
-			}
-			else
-			{
-				//Error
-				ASSERT(nullptr);
-				nResCount = -1;
-			}
+                        if(bHumanReadable)
+                        {
+                            if(pOutStr)
+                                pOutStr->operator +=(' ');
+                            else
+                                nResCount += 1;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                //Error
+                ASSERT(nullptr);
+                nResCount = -1;
+            }
 
-			if(pOutStr)
-				pOutStr->operator +=(L']');
-			else
-				nResCount += 1;
-		}
-		break;
+            if(pOutStr)
+                pOutStr->operator +=(L']');
+            else
+                nResCount += 1;
+        }
+        break;
 
-	case JVT_OBJECT:				// { "name1":"value1", "name2" : "value2" }
-		{
-			if(pOutStr)
-				pOutStr->operator +=('{');
-			else
-				nResCount += 1;
+    case JVT_OBJECT:				// { "name1":"value1", "name2" : "value2" }
+        {
+            if(pOutStr)
+                pOutStr->operator +=('{');
+            else
+                nResCount += 1;
 
-			JSON_OBJECT* pJO = (JSON_OBJECT*)val.pValue;
-			if(pJO)
-			{
-				intptr_t nCnt = pJO->arrObjElmts.size();
-				JSON_OBJECT_ELEMENT* pJOEs = pJO->arrObjElmts.data();
+            JSON_OBJECT* pJO = (JSON_OBJECT*)val.pValue;
+            if(pJO)
+            {
+                intptr_t nCnt = pJO->arrObjElmts.size();
+                JSON_OBJECT_ELEMENT* pJOEs = pJO->arrObjElmts.data();
 
-				for(intptr_t i = 0; i < nCnt; i++)
-				{
-					//Element name
-					if(bHumanReadable &&
-						i == 0)
-					{
-						if(pOutStr)
-						{
-							pOutStr->operator +=(pJFormat->strNewLine);
-							pOutStr->operator +=(strTabIndent);
-						}
-						else
-							nResCount += pJFormat->strNewLine.size() + strTabIndent.size();
-					}
+                for(intptr_t i = 0; i < nCnt; i++)
+                {
+                    //Element name
+                    if(bHumanReadable &&
+                        i == 0)
+                    {
+                        if(pOutStr)
+                        {
+                            pOutStr->operator +=(pJFormat->strNewLine);
+                            pOutStr->operator +=(strTabIndent);
+                        }
+                        else
+                            nResCount += pJFormat->strNewLine.size() + strTabIndent.size();
+                    }
 
-					if(pOutStr)
-					{
-						CJSON::appendFormat(*pOutStr, 
-							L("\"%s\":%s"),
-							pJOEs[i].strName.c_str(),
-							bHumanReadable ? L(" ") : L("")
-						);
-					}
-					else
-						nResCount += 1 + pJOEs[i].strName.size() + 1 + 1 + (bHumanReadable ? 1 : 0);
+                    if(pOutStr)
+                    {
+                        CJSON::appendFormat(*pOutStr, 
+                            L("\"%s\":%s"),
+                            pJOEs[i].strName.c_str(),
+                            bHumanReadable ? L(" ") : L("")
+                        );
+                    }
+                    else
+                        nResCount += 1 + pJOEs[i].strName.size() + 1 + 1 + (bHumanReadable ? 1 : 0);
 
-					//Print value
-					size_t n_res_chrsO = _toString_Value(pJOEs[i].val, pJFormat, pOutStr, nIndent + 1);
-					if(n_res_chrsO != -1)
-					{
-						//Add to other value
-						nResCount += n_res_chrsO;
-					}
-					else
-					{
-						//Failed
-						ASSERT(nullptr);
-						nResCount = -1;
-						break;
-					}
+                    //Print value
+                    size_t n_res_chrsO = _toString_Value(pJOEs[i].val, pJFormat, pOutStr, nIndent + 1);
+                    if(n_res_chrsO != -1)
+                    {
+                        //Add to other value
+                        nResCount += n_res_chrsO;
+                    }
+                    else
+                    {
+                        //Failed
+                        ASSERT(nullptr);
+                        nResCount = -1;
+                        break;
+                    }
 
-					if(i + 1 < nCnt)
-					{
-						//Add comma
-						if(pOutStr)
-							pOutStr->operator +=(',');
-						else
-							nResCount += 1;
+                    if(i + 1 < nCnt)
+                    {
+                        //Add comma
+                        if(pOutStr)
+                            pOutStr->operator +=(',');
+                        else
+                            nResCount += 1;
 
-						if(bHumanReadable)
-						{
-							if(pOutStr)
-							{
-								pOutStr->operator +=(pJFormat->strNewLine);
-								pOutStr->operator +=(strTabIndent);
-							}
-							else
-								nResCount += pJFormat->strNewLine.size() + strTabIndent.size();
-						}
-					}
-					else if(i + 1 == nCnt &&
-						bHumanReadable)
-					{
-						//Last element
-						if(pOutStr)
-						{
-							pOutStr->operator +=(pJFormat->strNewLine);
-							pOutStr->operator +=(strTabIndent_1);
-						}
-						else
-							nResCount += pJFormat->strNewLine.size() + strTabIndent_1.size();
-					}
-				}
-			}
-			else
-			{
-				//Error
-				ASSERT(nullptr);
-				nResCount = -1;
-			}
+                        if(bHumanReadable)
+                        {
+                            if(pOutStr)
+                            {
+                                pOutStr->operator +=(pJFormat->strNewLine);
+                                pOutStr->operator +=(strTabIndent);
+                            }
+                            else
+                                nResCount += pJFormat->strNewLine.size() + strTabIndent.size();
+                        }
+                    }
+                    else if(i + 1 == nCnt &&
+                        bHumanReadable)
+                    {
+                        //Last element
+                        if(pOutStr)
+                        {
+                            pOutStr->operator +=(pJFormat->strNewLine);
+                            pOutStr->operator +=(strTabIndent_1);
+                        }
+                        else
+                            nResCount += pJFormat->strNewLine.size() + strTabIndent_1.size();
+                    }
+                }
+            }
+            else
+            {
+                //Error
+                ASSERT(nullptr);
+                nResCount = -1;
+            }
 
-			if(pOutStr)
-				pOutStr->operator +=(L'}');
-			else
-				nResCount += 1;
-		}
-		break;
+            if(pOutStr)
+                pOutStr->operator +=(L'}');
+            else
+                nResCount += 1;
+        }
+        break;
 
-	default:
-		{
-			//Bad type
-			ASSERT(nullptr);
-			nResCount = -1;
-		}
-		break;
-	}
+    default:
+        {
+            //Bad type
+            ASSERT(nullptr);
+            nResCount = -1;
+        }
+        break;
+    }
 
-	return nResCount;
+    return nResCount;
 }
 
 std_wstring& CJSON::appendFormat(std_wstring& str, LPCTSTR pszFormat, ...)
 {
-	//Format string the same way as wsprintf() does
-	int nOSError = CJSON::GetLastError();
-	va_list args;
-	va_start(args, pszFormat);
+    //Format string the same way as wsprintf() does
+    int nOSError = CJSON::GetLastError();
+    va_list args;
+    va_start(args, pszFormat);
 
 #ifdef _WIN32
     //Windows specific
-	intptr_t nSz = _vscwprintf(pszFormat, args);
+    intptr_t nSz = _vscwprintf(pszFormat, args);
     
 #elif __APPLE__
     //macOS specific
@@ -1102,81 +1102,81 @@ std_wstring& CJSON::appendFormat(std_wstring& str, LPCTSTR pszFormat, ...)
     
 #endif
 
-	if(nSz >= 0)
+    if(nSz >= 0)
     {
-		WCHAR* p_buff = new (std::nothrow) WCHAR[nSz + 1];
-		if(p_buff)
+        WCHAR* p_buff = new (std::nothrow) WCHAR[nSz + 1];
+        if(p_buff)
         {
-			p_buff[0] = 0;
+            p_buff[0] = 0;
             
 #ifdef _WIN32
             //Windows specific
-			vswprintf_s(p_buff, nSz + 1, pszFormat, args);
+            vswprintf_s(p_buff, nSz + 1, pszFormat, args);
 #elif __APPLE__
             //macOS specific
             vsnprintf(p_buff, nSz + 1, pszFormat, args);
 #endif
 
-			remove_nulls_from_str(p_buff, (size_t&)nSz);
-			str.append(p_buff, nSz);
+            remove_nulls_from_str(p_buff, (size_t&)nSz);
+            str.append(p_buff, nSz);
 
-			delete[] p_buff;
-		}
-	}
+            delete[] p_buff;
+        }
+    }
 
-	va_end(args);
+    va_end(args);
 
     CJSON::SetLastError(nOSError);
-	return str;
+    return str;
 }
 
 WCHAR* CJSON::remove_nulls_from_str(WCHAR* p_str, size_t& szch)
 {
-	//Remove all internal nulls that may be in 'p_str'
-	//'szch' = original size of 'p_str' in WCHARs, without last null. It may be adjusted after this function returns
-	//RETURN:
-	//		= Pointer to 'p_str'
+    //Remove all internal nulls that may be in 'p_str'
+    //'szch' = original size of 'p_str' in WCHARs, without last null. It may be adjusted after this function returns
+    //RETURN:
+    //		= Pointer to 'p_str'
 
-	if(p_str &&
-		szch)
-	{
-		size_t szch0 = szch;
+    if(p_str &&
+        szch)
+    {
+        size_t szch0 = szch;
 
-		WCHAR* pE = p_str + szch;
-		for(WCHAR* pS = pE - 1; pS >= p_str; pS--)
+        WCHAR* pE = p_str + szch;
+        for(WCHAR* pS = pE - 1; pS >= p_str; pS--)
         {
-			if(!*pS)
+            if(!*pS)
             {
-				if(pS + 1 < pE)
-				{
-					//Remove it
-					memcpy(pS, pS + 1, (pE - pS - 1) * sizeof(WCHAR));
-				}
+                if(pS + 1 < pE)
+                {
+                    //Remove it
+                    memcpy(pS, pS + 1, (pE - pS - 1) * sizeof(WCHAR));
+                }
 
-				szch--;
-			}
-		}
+                szch--;
+            }
+        }
 
-		//Set last null
-		if(szch < szch0)
-		{
-			//Last null
-			p_str[szch] = 0;
-		}
-	}
+        //Set last null
+        if(szch < szch0)
+        {
+            //Last null
+            p_str[szch] = 0;
+        }
+    }
 
-	return p_str;
+    return p_str;
 }
 
 
 std_wstring& CJSON::lTrim(std_wstring &s)
 {
-	//Trim all white-spaces from the left side of 's'
-	//RETURN: = Same trimmed string
+    //Trim all white-spaces from the left side of 's'
+    //RETURN: = Same trimmed string
     
 #ifdef _WIN32
     //Windows specific
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
     
 #elif __APPLE__
     //macOS specific
@@ -1184,13 +1184,13 @@ std_wstring& CJSON::lTrim(std_wstring &s)
 
 #endif
     
-	return s;
+    return s;
 }
 
 std_wstring& CJSON::rTrim(std_wstring &s)
 {
-	//Trim all white-spaces from the right side of 's'
-	//RETURN: = Same trimmed string
+    //Trim all white-spaces from the right side of 's'
+    //RETURN: = Same trimmed string
 
 #ifdef _WIN32
     //Windows specific
@@ -1207,38 +1207,38 @@ std_wstring& CJSON::rTrim(std_wstring &s)
 
 std_wstring& CJSON::Trim(std_wstring &s)
 {
-	//Trim all white-spaces from 's'
-	//RETURN: = Same trimmed string
-	return lTrim(rTrim(s));
+    //Trim all white-spaces from 's'
+    //RETURN: = Same trimmed string
+    return lTrim(rTrim(s));
 }
 
 
 
 size_t CJSON::_escapeDoubleQuotedVal(std_wstring& s, JSON_FORMATTING* pJFormat, std_wstring* pOutStr)
 {
-	//'pOutStr' = if specified, will receive escaped string
-	//			= if nullptr, will return length of required string
-	//RETURN:
-	//		= Size of escaped quote in TCHARs if 'pOutStr' == nullptr
-	//		= 0 if 'pOutStr' != nullptr, or if error
-	ASSERT(pJFormat);
+    //'pOutStr' = if specified, will receive escaped string
+    //			= if nullptr, will return length of required string
+    //RETURN:
+    //		= Size of escaped quote in TCHARs if 'pOutStr' == nullptr
+    //		= 0 if 'pOutStr' != nullptr, or if error
+    ASSERT(pJFormat);
     size_t nResCnt = 0;
-	 
-	JSON_ESCAPE_TYPE escTp = pJFormat ? pJFormat->escapeType : JESCT_NO_UNICODE_ESCAPING;
+     
+    JSON_ESCAPE_TYPE escTp = pJFormat ? pJFormat->escapeType : JESCT_NO_UNICODE_ESCAPING;
 
-	ASSERT('\b' == 0x0008);
-	ASSERT('\f' == 0x000C);
-	ASSERT('\n' == 0x000A);
-	ASSERT('\r' == 0x000D);
-	ASSERT('\t' == 0x0009);
+    ASSERT('\b' == 0x0008);
+    ASSERT('\f' == 0x000C);
+    ASSERT('\n' == 0x000A);
+    ASSERT('\r' == 0x000D);
+    ASSERT('\t' == 0x0009);
 
     intptr_t i_delta = 1;
     
-	intptr_t nLn = s.size();
-	LPCTSTR pStr = s.c_str();
+    intptr_t nLn = s.size();
+    LPCTSTR pStr = s.c_str();
 
-	for(intptr_t i = 0; i < nLn; i += i_delta)
-	{
+    for(intptr_t i = 0; i < nLn; i += i_delta)
+    {
 #ifdef _WIN32
 //Windows specific
         WCHAR z = pStr[i];
@@ -1258,73 +1258,73 @@ size_t CJSON::_escapeDoubleQuotedVal(std_wstring& s, JSON_FORMATTING* pJFormat, 
         }
 #endif
         
-		//%x22 /          ; "    quotation mark  U+0022
-		//%x5C /          ; \    reverse solidus U+005C
-		//%x2F /          ; /    solidus         U+002F
-		//%x62 /          ; b    backspace       U+0008
-		//%x66 /          ; f    form feed       U+000C
-		//%x6E /          ; n    line feed       U+000A
-		//%x72 /          ; r    carriage return U+000D
-		//%x74 /          ; t    tab             U+0009
-		//%x75 4HEXDIG )  ; uXXXX                U+XXXX
-		if(z == '"' ||
-			z == '\\' ||
-			z == '/')
-		{
-			if(pOutStr)
-			{
-				pOutStr->operator +=('\\');
-				pOutStr->operator +=((WCHAR)z);
-			}
-			else
-				nResCnt += TSIZEOF(L("\\z"));
-		}
-		else if(z == '\b')
-		{
-			if(pOutStr)
-				pOutStr->operator +=(L("\\b"));
-			else
-				nResCnt += TSIZEOF(L("\\b"));
-		}
-		else if(z == '\f')
-		{
-			if(pOutStr)
-				pOutStr->operator +=(L("\\f"));
-			else
-				nResCnt += TSIZEOF(L("\\f"));
-		}
-		else if(z == '\n')
-		{
-			if(pOutStr)
-				pOutStr->operator +=(L("\\n"));
-			else
-				nResCnt += TSIZEOF(L("\\n"));
-		}
-		else if(z == '\r')
-		{
-			if(pOutStr)
-				pOutStr->operator +=(L("\\r"));
-			else
-				nResCnt += TSIZEOF(L("\\r"));
-		}
-		else if(z == '\t')
-		{
-			if(pOutStr)
-				pOutStr->operator +=(L("\\t"));
-			else
-				nResCnt += TSIZEOF(L("\\t"));
-		}
-		else if(z == 0)
-		{
-			//nullptr if it's there for some reason
-			if(pOutStr)
-				pOutStr->operator +=(L("\\0"));
-			else
-				nResCnt += TSIZEOF(L("\\0"));
-		}
-		else
-		{
-			//Do we need to do the escaping?
+        //%x22 /          ; "    quotation mark  U+0022
+        //%x5C /          ; \    reverse solidus U+005C
+        //%x2F /          ; /    solidus         U+002F
+        //%x62 /          ; b    backspace       U+0008
+        //%x66 /          ; f    form feed       U+000C
+        //%x6E /          ; n    line feed       U+000A
+        //%x72 /          ; r    carriage return U+000D
+        //%x74 /          ; t    tab             U+0009
+        //%x75 4HEXDIG )  ; uXXXX                U+XXXX
+        if(z == '"' ||
+            z == '\\' ||
+            z == '/')
+        {
+            if(pOutStr)
+            {
+                pOutStr->operator +=('\\');
+                pOutStr->operator +=((WCHAR)z);
+            }
+            else
+                nResCnt += TSIZEOF(L("\\z"));
+        }
+        else if(z == '\b')
+        {
+            if(pOutStr)
+                pOutStr->operator +=(L("\\b"));
+            else
+                nResCnt += TSIZEOF(L("\\b"));
+        }
+        else if(z == '\f')
+        {
+            if(pOutStr)
+                pOutStr->operator +=(L("\\f"));
+            else
+                nResCnt += TSIZEOF(L("\\f"));
+        }
+        else if(z == '\n')
+        {
+            if(pOutStr)
+                pOutStr->operator +=(L("\\n"));
+            else
+                nResCnt += TSIZEOF(L("\\n"));
+        }
+        else if(z == '\r')
+        {
+            if(pOutStr)
+                pOutStr->operator +=(L("\\r"));
+            else
+                nResCnt += TSIZEOF(L("\\r"));
+        }
+        else if(z == '\t')
+        {
+            if(pOutStr)
+                pOutStr->operator +=(L("\\t"));
+            else
+                nResCnt += TSIZEOF(L("\\t"));
+        }
+        else if(z == 0)
+        {
+            //nullptr if it's there for some reason
+            if(pOutStr)
+                pOutStr->operator +=(L("\\0"));
+            else
+                nResCnt += TSIZEOF(L("\\0"));
+        }
+        else
+        {
+            //Do we need to do the escaping?
             bool bEscIt;
 
 #ifdef _WIN32
@@ -1339,27 +1339,27 @@ size_t CJSON::_escapeDoubleQuotedVal(std_wstring& s, JSON_FORMATTING* pJFormat, 
                      (z >= 0x100 && z <= 0xffff && escTp == JESCT_ESCAPE_CHARS_AFTER_0x100);
 #endif
             
-			if(bEscIt)
-			{
-				//Escape Unicode
-				ASSERT(z >= 0 && z <= 0xffff);
+            if(bEscIt)
+            {
+                //Escape Unicode
+                ASSERT(z >= 0 && z <= 0xffff);
 
-				if(pOutStr)
-				{
-					CJSON::appendFormat(*pOutStr, L("\\u%04x"), z);
-				}
-				else
-					nResCnt += TSIZEOF(L("\\u0000"));
-			}
-			else
-			{
-				//Just add it as-is
+                if(pOutStr)
+                {
+                    CJSON::appendFormat(*pOutStr, L("\\u%04x"), z);
+                }
+                else
+                    nResCnt += TSIZEOF(L("\\u0000"));
+            }
+            else
+            {
+                //Just add it as-is
 #ifdef _WIN32
                 //Windows specific
-				if(pOutStr)
-					pOutStr->operator +=(z);
-				else
-					nResCnt += TSIZEOF(L("z"));
+                if(pOutStr)
+                    pOutStr->operator +=(z);
+                else
+                    nResCnt += TSIZEOF(L("z"));
                 
 #elif __APPLE__
                 //macOS specific
@@ -1380,112 +1380,112 @@ size_t CJSON::_escapeDoubleQuotedVal(std_wstring& s, JSON_FORMATTING* pJFormat, 
 
 #endif
             }
-		}
-	}
+        }
+    }
 
-	return nResCnt;
+    return nResCnt;
 }
 
 void CJSON::_freeJSON_ARRAY(JSON_ARRAY* pJA)
 {
-	//INFO: When this method returns 'pJA' will be no longer valid!
-	if(pJA)
-	{
-		for(intptr_t i = 0; i < (intptr_t)pJA->arrArrElmts.size(); i++)
-		{
-			//Free its children first
-			_freeJSON_VALUE(pJA->arrArrElmts[i].val);
-		}
+    //INFO: When this method returns 'pJA' will be no longer valid!
+    if(pJA)
+    {
+        for(intptr_t i = 0; i < (intptr_t)pJA->arrArrElmts.size(); i++)
+        {
+            //Free its children first
+            _freeJSON_VALUE(pJA->arrArrElmts[i].val);
+        }
 
-		//Then free the array
-		delete pJA;
-	}
+        //Then free the array
+        delete pJA;
+    }
 }
 
 void CJSON::_freeJSON_OBJECT(JSON_OBJECT* pJO)
 {
-	//INFO: When this method returns 'pJO' will be no longer valid!
-	if(pJO)
-	{
-		for(intptr_t i = 0; i < (intptr_t)pJO->arrObjElmts.size(); i++)
-		{
-			//Free its children first
-			_freeJSON_VALUE(pJO->arrObjElmts[i].val);
-		}
+    //INFO: When this method returns 'pJO' will be no longer valid!
+    if(pJO)
+    {
+        for(intptr_t i = 0; i < (intptr_t)pJO->arrObjElmts.size(); i++)
+        {
+            //Free its children first
+            _freeJSON_VALUE(pJO->arrObjElmts[i].val);
+        }
 
-		//Then free the object
-		delete pJO;
-	}
+        //Then free the object
+        delete pJO;
+    }
 }
 
 void JSON_DATA::_freeJSON_VALUE(JSON_VALUE& val)
 {
-	//Redirect
-	CJSON::_freeJSON_VALUE(val);
+    //Redirect
+    CJSON::_freeJSON_VALUE(val);
 }
 void JSON_NODE::_freeJSON_VALUE(JSON_VALUE& val)
 {
-	//Redirect
-	CJSON::_freeJSON_VALUE(val);
+    //Redirect
+    CJSON::_freeJSON_VALUE(val);
 }
 
 void CJSON::_freeJSON_VALUE(JSON_VALUE& val)
 {
-	switch(val.valType)
-	{
-	case JVT_ARRAY:
-		{
-			JSON_ARRAY* pJA = (JSON_ARRAY*)val.pValue;
-			ASSERT(pJA);
-			_freeJSON_ARRAY(pJA);
-		}
-		break;
+    switch(val.valType)
+    {
+    case JVT_ARRAY:
+        {
+            JSON_ARRAY* pJA = (JSON_ARRAY*)val.pValue;
+            ASSERT(pJA);
+            _freeJSON_ARRAY(pJA);
+        }
+        break;
 
-	case JVT_OBJECT:
-		{
-			JSON_OBJECT* pJO = (JSON_OBJECT*)val.pValue;
-			ASSERT(pJO);
-			_freeJSON_OBJECT(pJO);
-		}
-		break;
+    case JVT_OBJECT:
+        {
+            JSON_OBJECT* pJO = (JSON_OBJECT*)val.pValue;
+            ASSERT(pJO);
+            _freeJSON_OBJECT(pJO);
+        }
+        break;
             
     default:
         break;
-	}
+    }
 }
 
 
 void CJSON::_describeError(JSON_ERROR* pJError, intptr_t i, LPCTSTR pErrDesc)
 {
-	//Adds error description to 'pJError' if it's not there already
-	//INFO: In other words, it keeps only the first error info
-	if(pJError)
-	{
-		if(pJError->isEmpty())
-		{
-			pJError->nErrIndex = i;
-			pJError->strErrDesc = pErrDesc ? pErrDesc : L("");
-			pJError->markFilled();
-		}
-	}
+    //Adds error description to 'pJError' if it's not there already
+    //INFO: In other words, it keeps only the first error info
+    if(pJError)
+    {
+        if(pJError->isEmpty())
+        {
+            pJError->nErrIndex = i;
+            pJError->strErrDesc = pErrDesc ? pErrDesc : L("");
+            pJError->markFilled();
+        }
+    }
 }
 
 
 bool JSON_NODE::parseFloat(LPCTSTR pStr, double* pfOutVal)
 {
-	//Redirect
-	return CJSON::parseFloat(pStr, pfOutVal);
+    //Redirect
+    return CJSON::parseFloat(pStr, pfOutVal);
 }
 
 bool CJSON::parseFloat(LPCTSTR pStr, double* pfOutVal)
 {
-	//Parse float value from 'pStr' presented in local format
-	//'pfOutVal' = if not nullptr, receives value parsed
-	//RETURN:
-	//		= true if success
+    //Parse float value from 'pStr' presented in local format
+    //'pfOutVal' = if not nullptr, receives value parsed
+    //RETURN:
+    //		= true if success
     bool bRes = false;
 
-	double fVal = 0.0;
+    double fVal = 0.0;
 
     WCHAR* pp = nullptr;
 
@@ -1499,281 +1499,281 @@ bool CJSON::parseFloat(LPCTSTR pStr, double* pfOutVal)
     
 #endif
     
-	//Did we succeed?
-	bRes = pp && *pp == 0;
+    //Did we succeed?
+    bRes = pp && *pp == 0;
 
-	if(pfOutVal)
-		*pfOutVal = fVal;
+    if(pfOutVal)
+        *pfOutVal = fVal;
 
-	return bRes;
+    return bRes;
 }
 
 
 bool CJSON::isFloatingPointNumberString(LPCTSTR pStr)
 {
-	//Checks if 'pStr' contains an floating point number
-	//RETURN:
-	//		= true if yes
-	return parseFloat(pStr);
+    //Checks if 'pStr' contains an floating point number
+    //RETURN:
+    //		= true if yes
+    return parseFloat(pStr);
 }
 
 bool JSON_NODE::isIntegerBase10String(LPCTSTR pStr)
 {
-	//Redirect
-	return CJSON::isIntegerBase10String(pStr);
+    //Redirect
+    return CJSON::isIntegerBase10String(pStr);
 }
 
 bool CJSON::isIntegerBase10String(LPCTSTR pStr)
 {
-	//Checks if 'pStr' contains an integer
-	//RETURN:
-	//		= true if yes
+    //Checks if 'pStr' contains an integer
+    //RETURN:
+    //		= true if yes
     bool bRes = false;
 
-	if(pStr &&
-		pStr[0])
-	{
-		//Assume yes
-		bRes = true;
+    if(pStr &&
+        pStr[0])
+    {
+        //Assume yes
+        bRes = true;
 
         intptr_t nLn = STRLEN(pStr);
-		for(intptr_t i = 0; i < nLn; i++)
-		{
+        for(intptr_t i = 0; i < nLn; i++)
+        {
             WCHAR z = pStr[i];
 
-			//For first char only
-			if(i == 0)
-			{
-				if(z == '+' ||
-					z == '-')
-				{
-					//Good char
-					continue;
-				}
-			}
+            //For first char only
+            if(i == 0)
+            {
+                if(z == '+' ||
+                    z == '-')
+                {
+                    //Good char
+                    continue;
+                }
+            }
 
-			if(z >= '0' &&
-				z <= '9')
-			{
-				//Good char
-				continue;
-			}
+            if(z >= '0' &&
+                z <= '9')
+            {
+                //Good char
+                continue;
+            }
 
-			//Bad char
-			bRes = false;
-			break;
-		}
-	}
+            //Bad char
+            bRes = false;
+            break;
+        }
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
 
 JSON_NODE_TYPE CJSON::_determineNodeTypeSafe(JSON_VALUE* pVal)
 {
-	//RETURN:
-	//		= Type of node by 'pVal', or
-	//		  INFO: Cannot be JNT_ERROR or JNT_NONE, uses JNT_STRING instead
-	JSON_NODE_TYPE type = _determineNodeType(pVal);
-	if(type == JNT_ERROR ||
-		type == JNT_NONE)
-	{
-		//Use default value
-		ASSERT(nullptr);
-		type = JNT_STRING;
-	}
+    //RETURN:
+    //		= Type of node by 'pVal', or
+    //		  INFO: Cannot be JNT_ERROR or JNT_NONE, uses JNT_STRING instead
+    JSON_NODE_TYPE type = _determineNodeType(pVal);
+    if(type == JNT_ERROR ||
+        type == JNT_NONE)
+    {
+        //Use default value
+        ASSERT(nullptr);
+        type = JNT_STRING;
+    }
 
-	return type;
+    return type;
 }
 
 JSON_NODE_TYPE JSON_NODE::_determineNodeType(JSON_VALUE* pVal)
 {
-	//Redirect
-	return CJSON::_determineNodeType(pVal);
+    //Redirect
+    return CJSON::_determineNodeType(pVal);
 }
 
 JSON_NODE_TYPE CJSON::_determineNodeType(JSON_VALUE* pVal)
 {
-	//RETURN:
-	//		= Type of node by 'pVal', or
-	//		= JNT_ERROR if error
-	if(pVal)
-	{
-		if(pVal->valType == JVT_ARRAY)
-			return JNT_ARRAY;
-		else if(pVal->valType == JVT_OBJECT)
-			return JNT_OBJECT;
-		else if(pVal->valType == JVT_NONE)
-			return JNT_NONE;
-		else if(pVal->valType == JVT_DOUBLE_QUOTED)
-		{
-			//Just a string
-			return JNT_STRING;
-		}
-		else if(pVal->valType == JVT_PLAIN)
-		{
-			//Check special cases
-			//if(pVal->strValue.Compare(L"null") == 0)
-			if(json::JSON_NODE::compareStringsEqual(pVal->strValue, L("null"), true))
-				return JNT_NULL;
-			//else if(pVal->strValue.Compare(L"true") == 0 ||
-			//	pVal->strValue.Compare(L"false") == 0)
-			else if(json::JSON_NODE::compareStringsEqual(pVal->strValue, L("true"), true) ||
-				json::JSON_NODE::compareStringsEqual(pVal->strValue, L("false"), true))
-				return JNT_BOOLEAN;
+    //RETURN:
+    //		= Type of node by 'pVal', or
+    //		= JNT_ERROR if error
+    if(pVal)
+    {
+        if(pVal->valType == JVT_ARRAY)
+            return JNT_ARRAY;
+        else if(pVal->valType == JVT_OBJECT)
+            return JNT_OBJECT;
+        else if(pVal->valType == JVT_NONE)
+            return JNT_NONE;
+        else if(pVal->valType == JVT_DOUBLE_QUOTED)
+        {
+            //Just a string
+            return JNT_STRING;
+        }
+        else if(pVal->valType == JVT_PLAIN)
+        {
+            //Check special cases
+            //if(pVal->strValue.Compare(L"null") == 0)
+            if(json::JSON_NODE::compareStringsEqual(pVal->strValue, L("null"), true))
+                return JNT_NULL;
+            //else if(pVal->strValue.Compare(L"true") == 0 ||
+            //	pVal->strValue.Compare(L"false") == 0)
+            else if(json::JSON_NODE::compareStringsEqual(pVal->strValue, L("true"), true) ||
+                json::JSON_NODE::compareStringsEqual(pVal->strValue, L("false"), true))
+                return JNT_BOOLEAN;
 
-			//See if it's an integer or a floating point number
-			if(isIntegerBase10String(pVal->strValue.c_str()))
-				return JNT_INTEGER;
-			else if(isFloatingPointNumberString(pVal->strValue.c_str()))
-				return JNT_FLOAT;
-			else
-			{
-				//Else just a string
-				return JNT_STRING;
-			}
-		}
-	}
+            //See if it's an integer or a floating point number
+            if(isIntegerBase10String(pVal->strValue.c_str()))
+                return JNT_INTEGER;
+            else if(isFloatingPointNumberString(pVal->strValue.c_str()))
+                return JNT_FLOAT;
+            else
+            {
+                //Else just a string
+                return JNT_STRING;
+            }
+        }
+    }
 
-	return JNT_ERROR;
+    return JNT_ERROR;
 }
 
 
 JSON_NODE_TYPE JSON_NODE::findNodeByIndex(intptr_t nIndex, JSON_NODE* pJNodeFound)
 {
-	//Look for the node in this node with the 'nIndex'
-	//INFO: This node must be an object or array node
-	//'nIndex' = node zero-based index (use JSON_NODE::getNodeCount() to get number of nodes)
-	//'pJNodeFound' = if not nullptr, receives the data for the node found
-	//RETURN:
-	//		= Node type if found, or
-	//		= JNT_ERROR if error in search parameters
-	JSON_NODE_TYPE resType = JNT_ERROR;
+    //Look for the node in this node with the 'nIndex'
+    //INFO: This node must be an object or array node
+    //'nIndex' = node zero-based index (use JSON_NODE::getNodeCount() to get number of nodes)
+    //'pJNodeFound' = if not nullptr, receives the data for the node found
+    //RETURN:
+    //		= Node type if found, or
+    //		= JNT_ERROR if error in search parameters
+    JSON_NODE_TYPE resType = JNT_ERROR;
 
-	if(isNodeSet())
-	{
-		ASSERT(pVal);
-		if(pVal)
-		{
-			//Check node type
-			if(pVal->valType == JVT_OBJECT)
-			{
-				JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-				ASSERT(pJO);
-				if(pJO)
-				{
-					if(nIndex >= 0 &&
-						nIndex < (intptr_t)pJO->arrObjElmts.size())
-					{
-						//Got it
-						JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
+    if(isNodeSet())
+    {
+        ASSERT(pVal);
+        if(pVal)
+        {
+            //Check node type
+            if(pVal->valType == JVT_OBJECT)
+            {
+                JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                ASSERT(pJO);
+                if(pJO)
+                {
+                    if(nIndex >= 0 &&
+                        nIndex < (intptr_t)pJO->arrObjElmts.size())
+                    {
+                        //Got it
+                        JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
 
-						//Type
-						resType = CJSON::_determineNodeTypeSafe(&pJOE->val);
-						ASSERT(resType != JNT_NONE && resType != JNT_ERROR);
+                        //Type
+                        resType = CJSON::_determineNodeTypeSafe(&pJOE->val);
+                        ASSERT(resType != JNT_NONE && resType != JNT_ERROR);
 
-						if(pJNodeFound)
-						{
-							pJNodeFound->typeNode = resType;
-							pJNodeFound->strName = pJOE->strName;
-							pJNodeFound->pVal = &pJOE->val;
+                        if(pJNodeFound)
+                        {
+                            pJNodeFound->typeNode = resType;
+                            pJNodeFound->strName = pJOE->strName;
+                            pJNodeFound->pVal = &pJOE->val;
 
-							pJNodeFound->pJSONData = pJSONData;
-						}
-					}
-				}
-			}
-			else if(pVal->valType == JVT_ARRAY)
-			{
-				JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
-				ASSERT(pJA);
-				if(pJA)
-				{
-					if(nIndex >= 0 &&
-						nIndex < (intptr_t)pJA->arrArrElmts.size())
-					{
-						//Got it
-						JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
+                            pJNodeFound->pJSONData = pJSONData;
+                        }
+                    }
+                }
+            }
+            else if(pVal->valType == JVT_ARRAY)
+            {
+                JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
+                ASSERT(pJA);
+                if(pJA)
+                {
+                    if(nIndex >= 0 &&
+                        nIndex < (intptr_t)pJA->arrArrElmts.size())
+                    {
+                        //Got it
+                        JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
 
-						//Type
-						resType = CJSON::_determineNodeTypeSafe(&pJAE->val);
-						ASSERT(resType != JNT_NONE && resType != JNT_ERROR);
+                        //Type
+                        resType = CJSON::_determineNodeTypeSafe(&pJAE->val);
+                        ASSERT(resType != JNT_NONE && resType != JNT_ERROR);
 
-						if(pJNodeFound)
-						{
-							pJNodeFound->typeNode = resType;
-							pJNodeFound->strName.clear();
-							pJNodeFound->pVal = &pJAE->val;
+                        if(pJNodeFound)
+                        {
+                            pJNodeFound->typeNode = resType;
+                            pJNodeFound->strName.clear();
+                            pJNodeFound->pVal = &pJAE->val;
 
-							pJNodeFound->pJSONData = pJSONData;
-						}
-					}
-				}
-			}
-		}
-	}
+                            pJNodeFound->pJSONData = pJSONData;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	return resType;
+    return resType;
 }
 
 
 JSON_NODE_TYPE JSON_NODE::findNodeByName(LPCTSTR pStrName, JSON_NODE* pJNodeFound, bool bCaseSensitive, JSON_SRCH* pJSrch)
 {
-	//Look for the next node in this node with the name 'pStrName'
-	//INFO: Can be called repeatedly if 'JSON_SRCH' is used
-	//INFO: This node must be an object node only
-	//'pStrName' = node (or element) name to look for (cannot be ""!)
-	//'pJNodeFound' = if not nullptr, receives the data for the node found
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//'pJSrch' = if not nullptr, must be used for repeated searches for the same node name (keep calling this method while it succeeds in finding)
-	//RETURN:
-	//		= Node type if found, or
-	//		= JNT_NONE if nothing was found, or
-	//		= JNT_ERROR if error in search parameters
-	JSON_NODE_TYPE resType = JNT_ERROR;
+    //Look for the next node in this node with the name 'pStrName'
+    //INFO: Can be called repeatedly if 'JSON_SRCH' is used
+    //INFO: This node must be an object node only
+    //'pStrName' = node (or element) name to look for (cannot be ""!)
+    //'pJNodeFound' = if not nullptr, receives the data for the node found
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //'pJSrch' = if not nullptr, must be used for repeated searches for the same node name (keep calling this method while it succeeds in finding)
+    //RETURN:
+    //		= Node type if found, or
+    //		= JNT_NONE if nothing was found, or
+    //		= JNT_ERROR if error in search parameters
+    JSON_NODE_TYPE resType = JNT_ERROR;
 
-	if(isNodeSet() &&
-		pStrName &&
-		pStrName[0])
-	{
-		ASSERT(pVal);
-		if(pVal)
-		{
-			//Only if it's an object
-			if(pVal->valType == JVT_OBJECT)
-			{
-				JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-				if(pJO)
-				{
-					//Assume nothing was found
-					resType = JNT_NONE;
+    if(isNodeSet() &&
+        pStrName &&
+        pStrName[0])
+    {
+        ASSERT(pVal);
+        if(pVal)
+        {
+            //Only if it's an object
+            if(pVal->valType == JVT_OBJECT)
+            {
+                JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                if(pJO)
+                {
+                    //Assume nothing was found
+                    resType = JNT_NONE;
 
                     intptr_t nCntJOs = (intptr_t)pJO->arrObjElmts.size();
-					JSON_OBJECT_ELEMENT* pJOEs = pJO->arrObjElmts.data();
+                    JSON_OBJECT_ELEMENT* pJOEs = pJO->arrObjElmts.data();
 
                     intptr_t nFndInd = -1;
                     intptr_t nLnStrName = STRLEN(pStrName);
 
-					if(bCaseSensitive)
-					{
-						//Case sensitive search
-						for(intptr_t i = pJSrch ? pJSrch->nIndex : 0; i < nCntJOs; i++)
-						{
-							if(nLnStrName == pJOEs[i].strName.size() &&
-								memcmp(pJOEs[i].strName.c_str(), pStrName, nLnStrName * sizeof(WCHAR)) == 0)
-							{
-								//Matched
-								nFndInd = i;
-								break;
-							}
-						}
-					}
-					else
-					{
-						//Case insensitive search
-						for(intptr_t i = pJSrch ? pJSrch->nIndex : 0; i < nCntJOs; i++)
-						{
+                    if(bCaseSensitive)
+                    {
+                        //Case sensitive search
+                        for(intptr_t i = pJSrch ? pJSrch->nIndex : 0; i < nCntJOs; i++)
+                        {
+                            if(nLnStrName == pJOEs[i].strName.size() &&
+                                memcmp(pJOEs[i].strName.c_str(), pStrName, nLnStrName * sizeof(WCHAR)) == 0)
+                            {
+                                //Matched
+                                nFndInd = i;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //Case insensitive search
+                        for(intptr_t i = pJSrch ? pJSrch->nIndex : 0; i < nCntJOs; i++)
+                        {
                             if(JSON_NODE::compareStringsEqual(pJOEs[i].strName.c_str(),
                                                               pJOEs[i].strName.size(),
                                                               pStrName,
@@ -1784,70 +1784,70 @@ JSON_NODE_TYPE JSON_NODE::findNodeByName(LPCTSTR pStrName, JSON_NODE* pJNodeFoun
                                 nFndInd = i;
                                 break;
                             }
-						}
-					}
+                        }
+                    }
 
-					//Did we find it?
-					if(nFndInd >= 0 &&
-						nFndInd < nCntJOs)
-					{
-						//Determine node type
-						resType = CJSON::_determineNodeTypeSafe(&pJOEs[nFndInd].val);
-						ASSERT(resType != JNT_NONE && resType != JNT_ERROR);
+                    //Did we find it?
+                    if(nFndInd >= 0 &&
+                        nFndInd < nCntJOs)
+                    {
+                        //Determine node type
+                        resType = CJSON::_determineNodeTypeSafe(&pJOEs[nFndInd].val);
+                        ASSERT(resType != JNT_NONE && resType != JNT_ERROR);
 
-						//Do we need to return it?
-						if(pJNodeFound)
-						{
-							//Fill out the node found
-							pJNodeFound->typeNode = resType;
-							pJNodeFound->strName = pJOEs[nFndInd].strName;
-							pJNodeFound->pVal = &pJOEs[nFndInd].val;
+                        //Do we need to return it?
+                        if(pJNodeFound)
+                        {
+                            //Fill out the node found
+                            pJNodeFound->typeNode = resType;
+                            pJNodeFound->strName = pJOEs[nFndInd].strName;
+                            pJNodeFound->pVal = &pJOEs[nFndInd].val;
 
-							pJNodeFound->pJSONData = pJSONData;
-						}
+                            pJNodeFound->pJSONData = pJSONData;
+                        }
 
-						//Did we have a search struct?
-						if(pJSrch)
-						{
-							//Update index for the next search
-							pJSrch->nIndex = nFndInd + 1;
-						}
-					}
-				}
-			}
-		}
-	}
+                        //Did we have a search struct?
+                        if(pJSrch)
+                        {
+                            //Update index for the next search
+                            pJSrch->nIndex = nFndInd + 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	return resType;
+    return resType;
 }
 
 
 JSON_NODE_TYPE JSON_NODE::findNodeByNameAndGetValueAsString(LPCTSTR pStrName, std_wstring* pOutStr, bool bCaseSensitive)
 {
-	//Look for the first node in this node with the name 'pStrName'
-	//INFO: This node must be an object node only
-	//INFO: In case of more than one node matching the search, only the first one is retrieved
-	//'pStrName' = node (or element) name to look for (cannot be ""!)
-	//'pOutStr' = if not nullptr, receives the found node value
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= Node type if found, or
-	//		= JNT_NONE if nothing was found, or
-	//		= JNT_ERROR if error in search parameters, or retrieval
-	JSON_NODE jsnNd;
-	JSON_NODE_TYPE type = findNodeByName(pStrName, &jsnNd);
-	if(type > JNT_NONE)
-	{
-		//Read as string
-		if(!jsnNd.getValueAsString(pOutStr))
-		{
-			//Failed
-			ASSERT(nullptr);
-			type = JNT_ERROR;
-		}
-	}
+    //Look for the first node in this node with the name 'pStrName'
+    //INFO: This node must be an object node only
+    //INFO: In case of more than one node matching the search, only the first one is retrieved
+    //'pStrName' = node (or element) name to look for (cannot be ""!)
+    //'pOutStr' = if not nullptr, receives the found node value
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= Node type if found, or
+    //		= JNT_NONE if nothing was found, or
+    //		= JNT_ERROR if error in search parameters, or retrieval
+    JSON_NODE jsnNd;
+    JSON_NODE_TYPE type = findNodeByName(pStrName, &jsnNd);
+    if(type > JNT_NONE)
+    {
+        //Read as string
+        if(!jsnNd.getValueAsString(pOutStr))
+        {
+            //Failed
+            ASSERT(nullptr);
+            type = JNT_ERROR;
+        }
+    }
 
-	return type;
+    return type;
 }
 
 JSON_NODE_TYPE JSON_NODE::findNodeByNameAndGetValueAsInt32(LPCTSTR pStrName, int* pOuVal, bool bCaseSensitive)
@@ -1937,1133 +1937,1133 @@ JSON_NODE_TYPE JSON_NODE::findNodeByNameAndGetValueAsBool(LPCTSTR pStrName, bool
 
 JSON_NODE_TYPE JSON_NODE::findNodeByIndexAndGetValueAsString(intptr_t nIndex, std_wstring* pOutStr)
 {
-	//Look for the node in this node with the 'nIndex'
-	//INFO: This node must be an object or array node
-	//'nIndex' = node zero-based index (use JSON_NODE::getNodeCount() to get number of nodes)
-	//'pOutStr' = if not nullptr, receives the found node value
-	//RETURN:
-	//		= Node type if found, or
-	//		= JNT_ERROR if error in search parameters
-	JSON_NODE jsnNd;
-	JSON_NODE_TYPE type = this->findNodeByIndex(nIndex, &jsnNd);
-	if(type > JNT_NONE)
-	{
-		//Read as string
-		if(!jsnNd.getValueAsString(pOutStr))
-		{
-			//Failed
-			ASSERT(nullptr);
-			type = JNT_ERROR;
-		}
-	}
+    //Look for the node in this node with the 'nIndex'
+    //INFO: This node must be an object or array node
+    //'nIndex' = node zero-based index (use JSON_NODE::getNodeCount() to get number of nodes)
+    //'pOutStr' = if not nullptr, receives the found node value
+    //RETURN:
+    //		= Node type if found, or
+    //		= JNT_ERROR if error in search parameters
+    JSON_NODE jsnNd;
+    JSON_NODE_TYPE type = this->findNodeByIndex(nIndex, &jsnNd);
+    if(type > JNT_NONE)
+    {
+        //Read as string
+        if(!jsnNd.getValueAsString(pOutStr))
+        {
+            //Failed
+            ASSERT(nullptr);
+            type = JNT_ERROR;
+        }
+    }
 
-	return type;
+    return type;
 }
 
 
 bool JSON_NODE::setAsRootNode(JSON_DATA* pJSON_Data)
 {
-	//Set this node as a root node
-	//INFO: This will erase all data from this node
-	//INFO: Can be called on the node that is not set yet, or on a previous root node only
-	//'pJSON_Data' = JSON data holder, or nullptr to reuse existing data holder (if one was previously present)
-	//RETURN:
-	//		= true if success
+    //Set this node as a root node
+    //INFO: This will erase all data from this node
+    //INFO: Can be called on the node that is not set yet, or on a previous root node only
+    //'pJSON_Data' = JSON data holder, or nullptr to reuse existing data holder (if one was previously present)
+    //RETURN:
+    //		= true if success
     bool bRes = false;
 
-	//Is it OK to change it
+    //Is it OK to change it
     bool bOKToSetIt = true;
 
-	//Is this node set?
+    //Is this node set?
     bool bNodeIsSet = this->isNodeSet();
-	if(bNodeIsSet)
-	{
-		if(this->typeNode != JNT_ROOT)
-		{
-			//Can't make it a root node
-			bOKToSetIt = false;
-		}
-	}
+    if(bNodeIsSet)
+    {
+        if(this->typeNode != JNT_ROOT)
+        {
+            //Can't make it a root node
+            bOKToSetIt = false;
+        }
+    }
 
-	if(bOKToSetIt)
-	{
-		//Pick JSON data
-		if(!pJSON_Data)
-			pJSON_Data = pJSONData;
+    if(bOKToSetIt)
+    {
+        //Pick JSON data
+        if(!pJSON_Data)
+            pJSON_Data = pJSONData;
 
-		ASSERT(pJSON_Data);
-		if(pJSON_Data)
-		{
-			//First create an empty object
-			JSON_OBJECT* pJO = new (std::nothrow) JSON_OBJECT;
-			if(pJO)
-			{
-				//Was it set?
-				if(bNodeIsSet)
-				{
-					//Delete its data first
-					ASSERT(pVal);
-					_freeJSON_VALUE(*pVal);
+        ASSERT(pJSON_Data);
+        if(pJSON_Data)
+        {
+            //First create an empty object
+            JSON_OBJECT* pJO = new (std::nothrow) JSON_OBJECT;
+            if(pJO)
+            {
+                //Was it set?
+                if(bNodeIsSet)
+                {
+                    //Delete its data first
+                    ASSERT(pVal);
+                    _freeJSON_VALUE(*pVal);
 
-					pVal = nullptr;
-				}
+                    pVal = nullptr;
+                }
 
-				//Remember JSON data
-				pJSONData = pJSON_Data;
+                //Remember JSON data
+                pJSONData = pJSON_Data;
 
-				//Set root data
-				pJSON_Data->val.strValue.clear();
-				pJSON_Data->val.valType = JVT_OBJECT;
-				pJSON_Data->val.pValue = pJO;
+                //Set root data
+                pJSON_Data->val.strValue.clear();
+                pJSON_Data->val.valType = JVT_OBJECT;
+                pJSON_Data->val.pValue = pJO;
 
-				//Set it as an empty object
-				this->strName.clear();
-				this->typeNode = JNT_ROOT;
-				this->pVal = &pJSON_Data->val;
+                //Set it as an empty object
+                this->strName.clear();
+                this->typeNode = JNT_ROOT;
+                this->pVal = &pJSON_Data->val;
 
-				//Done
-				bRes = true;
-			}
-		}
-	}
+                //Done
+                bRes = true;
+            }
+        }
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
 bool JSON_NODE::setAsEmptyNode(JSON_DATA* pJSON_Data, JSON_NODE_TYPE type)
 {
-	//Set this node as a empty node
-	//INFO: This will erase all data from this node
-	//INFO: Can be called on the node that is not set yet, or on a previously used node
-	//'pJSON_Data' = JSON data holder, or nullptr to reuse existing data holder (if one was previously present)
-	//'type' = type of node to set, can be: JNT_OBJECT or JNT_ARRAY
-	//RETURN:
-	//		= true if success
+    //Set this node as a empty node
+    //INFO: This will erase all data from this node
+    //INFO: Can be called on the node that is not set yet, or on a previously used node
+    //'pJSON_Data' = JSON data holder, or nullptr to reuse existing data holder (if one was previously present)
+    //'type' = type of node to set, can be: JNT_OBJECT or JNT_ARRAY
+    //RETURN:
+    //		= true if success
     bool bRes = false;
 
-	//Pick JSON data
-	if(!pJSON_Data)
-		pJSON_Data = pJSONData;
+    //Pick JSON data
+    if(!pJSON_Data)
+        pJSON_Data = pJSONData;
 
-	ASSERT(pJSON_Data);
-	if(pJSON_Data)
-	{
-		//Create new element
-		if(type == JNT_OBJECT)
-		{
-			JSON_OBJECT* pJO = new (std::nothrow) JSON_OBJECT;
-			ASSERT(pJO);
-			if(pJO)
-			{
-				//Was node set?
-				if(isNodeSet())
-				{
-					//Delete its data first
-					ASSERT(pVal);
-					_freeJSON_VALUE(*pVal);
+    ASSERT(pJSON_Data);
+    if(pJSON_Data)
+    {
+        //Create new element
+        if(type == JNT_OBJECT)
+        {
+            JSON_OBJECT* pJO = new (std::nothrow) JSON_OBJECT;
+            ASSERT(pJO);
+            if(pJO)
+            {
+                //Was node set?
+                if(isNodeSet())
+                {
+                    //Delete its data first
+                    ASSERT(pVal);
+                    _freeJSON_VALUE(*pVal);
 
-					pVal = nullptr;
-				}
+                    pVal = nullptr;
+                }
 
-				//Remember JSON data
-				pJSONData = pJSON_Data;
+                //Remember JSON data
+                pJSONData = pJSON_Data;
 
-				//Set root data
-				pJSON_Data->val.strValue.clear();
-				pJSON_Data->val.valType = JVT_OBJECT;
-				pJSON_Data->val.pValue = pJO;
+                //Set root data
+                pJSON_Data->val.strValue.clear();
+                pJSON_Data->val.valType = JVT_OBJECT;
+                pJSON_Data->val.pValue = pJO;
 
-				//Set it as an empty object
-				this->strName.clear();
-				this->typeNode = JNT_OBJECT;
-				this->pVal = &pJSON_Data->val;
+                //Set it as an empty object
+                this->strName.clear();
+                this->typeNode = JNT_OBJECT;
+                this->pVal = &pJSON_Data->val;
 
-				//Done
-				bRes = true;
-			}
-		}
-		else if(type == JNT_ARRAY)
-		{
-			JSON_ARRAY* pJA = new (std::nothrow) JSON_ARRAY;
-			ASSERT(pJA);
-			if(pJA)
-			{
-				//Was node set?
-				if(isNodeSet())
-				{
-					//Delete its data first
-					ASSERT(pVal);
-					_freeJSON_VALUE(*pVal);
+                //Done
+                bRes = true;
+            }
+        }
+        else if(type == JNT_ARRAY)
+        {
+            JSON_ARRAY* pJA = new (std::nothrow) JSON_ARRAY;
+            ASSERT(pJA);
+            if(pJA)
+            {
+                //Was node set?
+                if(isNodeSet())
+                {
+                    //Delete its data first
+                    ASSERT(pVal);
+                    _freeJSON_VALUE(*pVal);
 
-					pVal = nullptr;
-				}
+                    pVal = nullptr;
+                }
 
-				//Remember JSON data
-				pJSONData = pJSON_Data;
+                //Remember JSON data
+                pJSONData = pJSON_Data;
 
-				//Set root data
-				pJSON_Data->val.strValue.clear();
-				pJSON_Data->val.valType = JVT_ARRAY;
-				pJSON_Data->val.pValue = pJA;
+                //Set root data
+                pJSON_Data->val.strValue.clear();
+                pJSON_Data->val.valType = JVT_ARRAY;
+                pJSON_Data->val.pValue = pJA;
 
-				//Set it as an empty object
-				this->strName.clear();
-				this->typeNode = JNT_ARRAY;
-				this->pVal = &pJSON_Data->val;
+                //Set it as an empty object
+                this->strName.clear();
+                this->typeNode = JNT_ARRAY;
+                this->pVal = &pJSON_Data->val;
 
-				//Done
-				bRes = true;
-			}
-		}
+                //Done
+                bRes = true;
+            }
+        }
 
-	}
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
 
 bool CJSON::_deepCopyJSON_VALUE(JSON_VALUE* pDestV, JSON_VALUE* pSrcV)
 {
-	//Copy 'pSrcV' into 'pDestV' by erasing previous values in 'pDestV'
-	//RETURN:
-	//		= true if success
+    //Copy 'pSrcV' into 'pDestV' by erasing previous values in 'pDestV'
+    //RETURN:
+    //		= true if success
     bool bRes = false;
 
-	if(pDestV &&
-		pSrcV)
-	{
-		//First erase the dest
-		if(!pDestV->isEmptyValue())
-		{
-			CJSON::_freeJSON_VALUE(*pDestV);
+    if(pDestV &&
+        pSrcV)
+    {
+        //First erase the dest
+        if(!pDestV->isEmptyValue())
+        {
+            CJSON::_freeJSON_VALUE(*pDestV);
 
-			pDestV->pValue = nullptr;
-			pDestV->valType = JVT_NONE;
-			pDestV->strValue.clear();
-		}
+            pDestV->pValue = nullptr;
+            pDestV->valType = JVT_NONE;
+            pDestV->strValue.clear();
+        }
 
-		//Then begin copying
-		bRes = __copySingleVal(pDestV, pSrcV);
-	}
+        //Then begin copying
+        bRes = __copySingleVal(pDestV, pSrcV);
+    }
 
-	return bRes;
+    return bRes;
 }
 
 bool CJSON::__copySingleVal(JSON_VALUE* pDestV, JSON_VALUE* pSrcV)
 {
     bool bRes = false;
-	ASSERT(pDestV);
-	ASSERT(pSrcV);
+    ASSERT(pDestV);
+    ASSERT(pSrcV);
 
-	switch(pSrcV->valType)
-	{
-	case JVT_NONE:
-	case JVT_PLAIN:
-	case JVT_DOUBLE_QUOTED:
-		{
-			pDestV->valType = pSrcV->valType;
-			pDestV->strValue = pSrcV->strValue;
-			pDestV->pValue = nullptr;
+    switch(pSrcV->valType)
+    {
+    case JVT_NONE:
+    case JVT_PLAIN:
+    case JVT_DOUBLE_QUOTED:
+        {
+            pDestV->valType = pSrcV->valType;
+            pDestV->strValue = pSrcV->strValue;
+            pDestV->pValue = nullptr;
 
-			bRes = true;
-		}
-		break;
+            bRes = true;
+        }
+        break;
 
-	case JVT_ARRAY:
-		{
-			pDestV->valType = pSrcV->valType;
-			pDestV->strValue = pSrcV->strValue;
-			pDestV->pValue = nullptr;
+    case JVT_ARRAY:
+        {
+            pDestV->valType = pSrcV->valType;
+            pDestV->strValue = pSrcV->strValue;
+            pDestV->pValue = nullptr;
 
-			JSON_ARRAY* pSrcJA = (JSON_ARRAY*)pSrcV->pValue;
-			ASSERT(pSrcJA);
-			if(pSrcJA)
-			{
-				JSON_ARRAY* pDestJA = new (std::nothrow) JSON_ARRAY;
-				ASSERT(pDestJA);
-				if(pDestJA)
-				{
-					//Assume success
-					bRes = true;
+            JSON_ARRAY* pSrcJA = (JSON_ARRAY*)pSrcV->pValue;
+            ASSERT(pSrcJA);
+            if(pSrcJA)
+            {
+                JSON_ARRAY* pDestJA = new (std::nothrow) JSON_ARRAY;
+                ASSERT(pDestJA);
+                if(pDestJA)
+                {
+                    //Assume success
+                    bRes = true;
 
-					for(intptr_t i = 0; i < (intptr_t)pSrcJA->arrArrElmts.size(); i++)
-					{
-						JSON_ARRAY_ELEMENT jae;
-						if(__copySingleVal(&jae.val, &pSrcJA->arrArrElmts[i].val))
-						{
-							pDestJA->arrArrElmts.push_back(jae);
-						}
-						else
-						{
-							//Error
-							bRes = false;
-							break;
-						}
-					}
+                    for(intptr_t i = 0; i < (intptr_t)pSrcJA->arrArrElmts.size(); i++)
+                    {
+                        JSON_ARRAY_ELEMENT jae;
+                        if(__copySingleVal(&jae.val, &pSrcJA->arrArrElmts[i].val))
+                        {
+                            pDestJA->arrArrElmts.push_back(jae);
+                        }
+                        else
+                        {
+                            //Error
+                            bRes = false;
+                            break;
+                        }
+                    }
 
-					//Did it go thru?
-					if(bRes)
-					{
-						//Remember the pointer
-						pDestV->pValue = pDestJA;
-					}
-					else
-					{
-						//Free it
-						_freeJSON_ARRAY(pDestJA);
-					}
-				}
-			}
-		}
-		break;
+                    //Did it go thru?
+                    if(bRes)
+                    {
+                        //Remember the pointer
+                        pDestV->pValue = pDestJA;
+                    }
+                    else
+                    {
+                        //Free it
+                        _freeJSON_ARRAY(pDestJA);
+                    }
+                }
+            }
+        }
+        break;
 
-	case JVT_OBJECT:
-		{
-			pDestV->valType = pSrcV->valType;
-			pDestV->strValue = pSrcV->strValue;
-			pDestV->pValue = nullptr;
+    case JVT_OBJECT:
+        {
+            pDestV->valType = pSrcV->valType;
+            pDestV->strValue = pSrcV->strValue;
+            pDestV->pValue = nullptr;
 
-			JSON_OBJECT* pSrcJO = (JSON_OBJECT*)pSrcV->pValue;
-			ASSERT(pSrcJO);
-			if(pSrcJO)
-			{
-				JSON_OBJECT* pDestJO = new (std::nothrow) JSON_OBJECT;
-				ASSERT(pDestJO);
-				if(pDestJO)
-				{
-					//Assume success
-					bRes = true;
+            JSON_OBJECT* pSrcJO = (JSON_OBJECT*)pSrcV->pValue;
+            ASSERT(pSrcJO);
+            if(pSrcJO)
+            {
+                JSON_OBJECT* pDestJO = new (std::nothrow) JSON_OBJECT;
+                ASSERT(pDestJO);
+                if(pDestJO)
+                {
+                    //Assume success
+                    bRes = true;
 
                     intptr_t nCntJOs = (intptr_t)pSrcJO->arrObjElmts.size();
-					JSON_OBJECT_ELEMENT* pJOEs = pSrcJO->arrObjElmts.data();
+                    JSON_OBJECT_ELEMENT* pJOEs = pSrcJO->arrObjElmts.data();
 
-					for(intptr_t i = 0; i < nCntJOs; i++)
-					{
-						JSON_OBJECT_ELEMENT joe;
-						if(__copySingleVal(&joe.val, &pJOEs[i].val))
-						{
-							joe.strName = pJOEs[i].strName;
+                    for(intptr_t i = 0; i < nCntJOs; i++)
+                    {
+                        JSON_OBJECT_ELEMENT joe;
+                        if(__copySingleVal(&joe.val, &pJOEs[i].val))
+                        {
+                            joe.strName = pJOEs[i].strName;
 
-							pDestJO->arrObjElmts.push_back(joe);
-						}
-						else
-						{
-							//Error
-							bRes = false;
-							break;
-						}
-					}
+                            pDestJO->arrObjElmts.push_back(joe);
+                        }
+                        else
+                        {
+                            //Error
+                            bRes = false;
+                            break;
+                        }
+                    }
 
-					//Did it go thru?
-					if(bRes)
-					{
-						//Remember the pointer
-						pDestV->pValue = pDestJO;
-					}
-					else
-					{
-						//Free it
-						_freeJSON_OBJECT(pDestJO);
-					}
-				}
-			}
-		}
-		break;
-	}
+                    //Did it go thru?
+                    if(bRes)
+                    {
+                        //Remember the pointer
+                        pDestV->pValue = pDestJO;
+                    }
+                    else
+                    {
+                        //Free it
+                        _freeJSON_OBJECT(pDestJO);
+                    }
+                }
+            }
+        }
+        break;
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
 bool JSON_NODE::addNode(JSON_NODE* pJNode)
 {
-	//Add new 'pJNode' node to this node (where this node is either an object or array node)
-	//INFO: It makes a "deep" copy of 'pJNode'
-	//INFO: Can't be used to add nodes from the same JSON data.
-	//RETURN:
-	//		= true if success
+    //Add new 'pJNode' node to this node (where this node is either an object or array node)
+    //INFO: It makes a "deep" copy of 'pJNode'
+    //INFO: Can't be used to add nodes from the same JSON data.
+    //RETURN:
+    //		= true if success
     bool bRes = false;
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	//Node must be specified and it must have a name
-	if(pJNode &&
-		pJSONData)
-	{
-		//Make sure that JSON data is not the same
-		if(this->pJSONData != pJNode->pJSONData &&
-			pJNode->pJSONData)
-		{
-			ASSERT(pVal);
-			if(pVal->valType == JVT_OBJECT)
-			{
-				//We must have a name for this node
-				if(!pJNode->strName.empty())
-				{
-					JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-					ASSERT(pJO);
-					if(pJO)
-					{
-						//Add new
-						JSON_OBJECT_ELEMENT joe;
+    //Node must be specified and it must have a name
+    if(pJNode &&
+        pJSONData)
+    {
+        //Make sure that JSON data is not the same
+        if(this->pJSONData != pJNode->pJSONData &&
+            pJNode->pJSONData)
+        {
+            ASSERT(pVal);
+            if(pVal->valType == JVT_OBJECT)
+            {
+                //We must have a name for this node
+                if(!pJNode->strName.empty())
+                {
+                    JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                    ASSERT(pJO);
+                    if(pJO)
+                    {
+                        //Add new
+                        JSON_OBJECT_ELEMENT joe;
 
-						//Copy node name
-						joe.strName = pJNode->strName;
+                        //Copy node name
+                        joe.strName = pJNode->strName;
 
-						//Copy value
-						if(CJSON::_deepCopyJSON_VALUE(&joe.val, pJNode->pVal))
-						{
-							//Add it
-							pJO->arrObjElmts.push_back(joe);
+                        //Copy value
+                        if(CJSON::_deepCopyJSON_VALUE(&joe.val, pJNode->pVal))
+                        {
+                            //Add it
+                            pJO->arrObjElmts.push_back(joe);
 
-							//Done
-							bRes = true;
-						}
-					}
-				}
-			}
-			else if(pVal->valType == JVT_ARRAY)
-			{
-				JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
-				ASSERT(pJA);
-				if(pJA)
-				{
-					//Add new
-					JSON_ARRAY_ELEMENT jae;
+                            //Done
+                            bRes = true;
+                        }
+                    }
+                }
+            }
+            else if(pVal->valType == JVT_ARRAY)
+            {
+                JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
+                ASSERT(pJA);
+                if(pJA)
+                {
+                    //Add new
+                    JSON_ARRAY_ELEMENT jae;
 
-					//Copy value
-					if(CJSON::_deepCopyJSON_VALUE(&jae.val, pJNode->pVal))
-					{
-						//Add it
-						pJA->arrArrElmts.push_back(jae);
+                    //Copy value
+                    if(CJSON::_deepCopyJSON_VALUE(&jae.val, pJNode->pVal))
+                    {
+                        //Add it
+                        pJA->arrArrElmts.push_back(jae);
 
-						//Done
-						bRes = true;
-					}
-				}
-			}
-			else
-			{
-				//Can add only to the Array or Object note
-				ASSERT(nullptr);
-			}
-		}
-		else
-		{
-			//Can't use same JSON object
-			ASSERT(nullptr);
-		}
-	}
+                        //Done
+                        bRes = true;
+                    }
+                }
+            }
+            else
+            {
+                //Can add only to the Array or Object note
+                ASSERT(nullptr);
+            }
+        }
+        else
+        {
+            //Can't use same JSON object
+            ASSERT(nullptr);
+        }
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
 bool JSON_NODE::_addNode_WithType(LPCTSTR pStrName, JSON_VALUE_TYPE type, LPCTSTR pStrValue)
 {
-	//Add new node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'type' = type to assign to value. Can be JVT_PLAIN or JVT_DOUBLE_QUOTED
-	//'pStrValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'type' = type to assign to value. Can be JVT_PLAIN or JVT_DOUBLE_QUOTED
+    //'pStrValue' = value
+    //RETURN:
+    //		= true if success
     bool bRes = false;
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	if(pJSONData)
-	{
-		//Check allowed types
-		if(type == JVT_PLAIN ||
-			type == JVT_DOUBLE_QUOTED)
-		{
-			ASSERT(pVal);
-			if(pVal->valType == JVT_OBJECT)
-			{
-				//Only if we have a name
-				if(pStrName &&
-					pStrName[0])
-				{
-					JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-					ASSERT(pJO);
-					if(pJO)
-					{
-						//Add new
-						JSON_OBJECT_ELEMENT joe;
+    if(pJSONData)
+    {
+        //Check allowed types
+        if(type == JVT_PLAIN ||
+            type == JVT_DOUBLE_QUOTED)
+        {
+            ASSERT(pVal);
+            if(pVal->valType == JVT_OBJECT)
+            {
+                //Only if we have a name
+                if(pStrName &&
+                    pStrName[0])
+                {
+                    JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                    ASSERT(pJO);
+                    if(pJO)
+                    {
+                        //Add new
+                        JSON_OBJECT_ELEMENT joe;
 
-						//Copy node name
-						joe.strName = pStrName;
+                        //Copy node name
+                        joe.strName = pStrName;
 
-						//And value
-						joe.val.valType = type;
-						joe.val.strValue = pStrValue ? pStrValue : L("");
-						joe.val.pValue = nullptr;
+                        //And value
+                        joe.val.valType = type;
+                        joe.val.strValue = pStrValue ? pStrValue : L("");
+                        joe.val.pValue = nullptr;
 
-						if(type == JVT_PLAIN)
-						{
-							//Trim value
-							CJSON::Trim(joe.val.strValue);
-						}
+                        if(type == JVT_PLAIN)
+                        {
+                            //Trim value
+                            CJSON::Trim(joe.val.strValue);
+                        }
 
-						//Add it
-						pJO->arrObjElmts.push_back(joe);
+                        //Add it
+                        pJO->arrObjElmts.push_back(joe);
 
-						//Done
-						bRes = true;
-					}
-				}
-			}
-			else if(pVal->valType == JVT_ARRAY)
-			{
-				JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
-				ASSERT(pJA);
-				if(pJA)
-				{
-					//Add new
-					JSON_ARRAY_ELEMENT jae;
+                        //Done
+                        bRes = true;
+                    }
+                }
+            }
+            else if(pVal->valType == JVT_ARRAY)
+            {
+                JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
+                ASSERT(pJA);
+                if(pJA)
+                {
+                    //Add new
+                    JSON_ARRAY_ELEMENT jae;
 
-					//Set value
-					jae.val.valType = type;
-					jae.val.strValue = pStrValue ? pStrValue : L("");
-					jae.val.pValue = nullptr;
+                    //Set value
+                    jae.val.valType = type;
+                    jae.val.strValue = pStrValue ? pStrValue : L("");
+                    jae.val.pValue = nullptr;
 
-					if(type == JVT_PLAIN)
-					{
-						//Trim value
-						CJSON::Trim(jae.val.strValue);
-					}
+                    if(type == JVT_PLAIN)
+                    {
+                        //Trim value
+                        CJSON::Trim(jae.val.strValue);
+                    }
 
-					//Add it
-					pJA->arrArrElmts.push_back(jae);
+                    //Add it
+                    pJA->arrArrElmts.push_back(jae);
 
-					//Done
-					bRes = true;
-				}
-			}
-			else
-			{
-				//Can add only to the Array or Object note
-				ASSERT(nullptr);
-			}
-		}
-	}
+                    //Done
+                    bRes = true;
+                }
+            }
+            else
+            {
+                //Can add only to the Array or Object note
+                ASSERT(nullptr);
+            }
+        }
+    }
 
-	return bRes;
+    return bRes;
 }
 
 bool JSON_NODE::addNode_String(LPCTSTR pStrName, LPCTSTR pStrValue)
 {
-	//Add new string node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'pStrValue' = value
-	//RETURN:
-	//		= true if success
-	return _addNode_WithType(pStrName, JVT_DOUBLE_QUOTED, pStrValue);
+    //Add new string node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'pStrValue' = value
+    //RETURN:
+    //		= true if success
+    return _addNode_WithType(pStrName, JVT_DOUBLE_QUOTED, pStrValue);
 }
 
 bool JSON_NODE::addNode_BOOL(LPCTSTR pStrName, bool bValue)
 {
-	//Add new boolean node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'bValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new boolean node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'bValue' = value
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"));
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"));
 }
 
 bool JSON_NODE::addNode_Bool(LPCTSTR pStrName, bool bValue)
 {
-	//Add new boolean node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'bValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new boolean node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'bValue' = value
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"));
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"));
 }
 
 bool JSON_NODE::addNode_Null(LPCTSTR pStrName)
 {
-	//Add new null node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//RETURN:
-	//		= true if success
+    //Add new null node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, L("null"));
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, L("null"));
 }
 
 bool JSON_NODE::addNode_Int(LPCTSTR pStrName, LPCTSTR pStrValue)
 {
-	//Add new integer node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'pStrValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new integer node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'pStrValue' = value
+    //RETURN:
+    //		= true if success
 
-	//Check if number
-	if(!CJSON::isIntegerBase10String(pStrValue))
-		return false;
+    //Check if number
+    if(!CJSON::isIntegerBase10String(pStrValue))
+        return false;
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, pStrValue);
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, pStrValue);
 }
 
 bool JSON_NODE::addNode_Int(LPCTSTR pStrName, int nValue)
 {
-	//Add new integer node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'nValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new integer node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'nValue' = value
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%d"), nValue).c_str());
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%d"), nValue).c_str());
 }
 
 bool JSON_NODE::addNode_Int64(LPCTSTR pStrName, LPCTSTR pStrValue)
 {
-	//Add new 64-bit integer node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'pStrValue' = value
-	//RETURN:
-	//		= true if success
-	return addNode_Int(pStrName, pStrValue);
+    //Add new 64-bit integer node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'pStrValue' = value
+    //RETURN:
+    //		= true if success
+    return addNode_Int(pStrName, pStrValue);
 }
 
 bool JSON_NODE::addNode_Int64(LPCTSTR pStrName, int64_t iiValue)
 {
-	//Add new 64-bit integer node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'nValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new 64-bit integer node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'nValue' = value
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%lld"), iiValue).c_str());
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%lld"), iiValue).c_str());
 }
 
 
 bool JSON_NODE::addNode_Double(LPCTSTR pStrName, LPCTSTR pStrValue)
 {
-	//Add new floating point value node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'pStrValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new floating point value node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'pStrValue' = value
+    //RETURN:
+    //		= true if success
 
-	//Check if number
-	if(!CJSON::isFloatingPointNumberString(pStrValue))
-		return false;
+    //Check if number
+    if(!CJSON::isFloatingPointNumberString(pStrValue))
+        return false;
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, pStrValue);
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, pStrValue);
 }
 
 bool JSON_NODE::addNode_Double(LPCTSTR pStrName, double fValue)
 {
-	//Add new floating point value node to this node (where this node is either an object or array node)
-	//'pStrName' = node name (cannot be empty for objects and not used for arrays)
-	//				INFO: JSON specs do not allow duplicate names (this class allows it.)
-	//				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
-	//						http://tools.ietf.org/html/rfc7158
-	//'nValue' = value
-	//RETURN:
-	//		= true if success
+    //Add new floating point value node to this node (where this node is either an object or array node)
+    //'pStrName' = node name (cannot be empty for objects and not used for arrays)
+    //				INFO: JSON specs do not allow duplicate names (this class allows it.)
+    //				INFO: JSON specs specifies that names are case-sensitive (this class can treat them as case-insensitive when looking for nodes)
+    //						http://tools.ietf.org/html/rfc7158
+    //'nValue' = value
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _addNode_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%f"), fValue).c_str());
+    //And add it
+    return _addNode_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%f"), fValue).c_str());
 }
 
 
 
 intptr_t JSON_NODE::setNodeByName(LPCTSTR pStrName, JSON_NODE* pJNode, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' in this node to a new value
-	//INFO: It makes a "deep" copy of 'pJNode'
-	//INFO: Can't be used to set nodes from the same JSON data.
-	//INFO: Sets ALL nodes with the matching name, if there's more than one
-	//'pStrName' = node name to set (cannot be empty)
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
+    //Set node with 'pStrName' in this node to a new value
+    //INFO: It makes a "deep" copy of 'pJNode'
+    //INFO: Can't be used to set nodes from the same JSON data.
+    //INFO: Sets ALL nodes with the matching name, if there's more than one
+    //'pStrName' = node name to set (cannot be empty)
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
     intptr_t nCntNodesSet = -1;
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	//Node must be specified and it must have a name
-	if(pJNode &&
-		pStrName &&
-		pStrName[0] &&
-		pJSONData)
-	{
-		//Make sure that JSON data is not the same
-		if(this->pJSONData != pJNode->pJSONData &&
-			pJNode->pJSONData)
-		{
-			ASSERT(pVal);
-			if(pVal->valType == JVT_OBJECT)
-			{
-				JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-				ASSERT(pJO);
-				if(pJO)
-				{
-					//Assume success
-					nCntNodesSet = 0;
+    //Node must be specified and it must have a name
+    if(pJNode &&
+        pStrName &&
+        pStrName[0] &&
+        pJSONData)
+    {
+        //Make sure that JSON data is not the same
+        if(this->pJSONData != pJNode->pJSONData &&
+            pJNode->pJSONData)
+        {
+            ASSERT(pVal);
+            if(pVal->valType == JVT_OBJECT)
+            {
+                JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                ASSERT(pJO);
+                if(pJO)
+                {
+                    //Assume success
+                    nCntNodesSet = 0;
 
-					//Start looking for needed nodes
-					for(JSON_SRCH jSrch;;)
-					{
-						//Find next node by name
-						JSON_NODE_TYPE resFN = findNodeByName(pStrName, nullptr, bCaseSensitive, &jSrch);
-						if(resFN > JNT_NONE)
-						{
-							intptr_t nFndInd = jSrch.getIndexFoundAt();
-							if(nFndInd >= 0 &&
-								nFndInd < (intptr_t)pJO->arrObjElmts.size())
-							{
-								//Pick element found
-								JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nFndInd];
+                    //Start looking for needed nodes
+                    for(JSON_SRCH jSrch;;)
+                    {
+                        //Find next node by name
+                        JSON_NODE_TYPE resFN = findNodeByName(pStrName, nullptr, bCaseSensitive, &jSrch);
+                        if(resFN > JNT_NONE)
+                        {
+                            intptr_t nFndInd = jSrch.getIndexFoundAt();
+                            if(nFndInd >= 0 &&
+                                nFndInd < (intptr_t)pJO->arrObjElmts.size())
+                            {
+                                //Pick element found
+                                JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nFndInd];
 
-								//First clear the old value
-							//	CJSON::_freeJSON_VALUE(pJOE->val);			//No need to do it -- it will be done by _deepCopyJSON_VALUE()!
+                                //First clear the old value
+                            //	CJSON::_freeJSON_VALUE(pJOE->val);			//No need to do it -- it will be done by _deepCopyJSON_VALUE()!
 
-								//And do "deep" copy
-								if(CJSON::_deepCopyJSON_VALUE(&pJOE->val, pJNode->pVal))
-								{
-									//Count the ones set
-									if(nCntNodesSet >= 0)
-										nCntNodesSet++;
-								}
-								else
-								{
-									//Failed
-									ASSERT(nullptr);
-									nCntNodesSet = -1;
-								}
-							}
-							else
-							{
-								//Error
-								ASSERT(nullptr);
-								nCntNodesSet = -1;
-								break;
-							}
-						}
-						else
-						{
-							if(resFN == JNT_ERROR)
-							{
-								//Error
-								ASSERT(nullptr);
-								nCntNodesSet = -1;
-							}
+                                //And do "deep" copy
+                                if(CJSON::_deepCopyJSON_VALUE(&pJOE->val, pJNode->pVal))
+                                {
+                                    //Count the ones set
+                                    if(nCntNodesSet >= 0)
+                                        nCntNodesSet++;
+                                }
+                                else
+                                {
+                                    //Failed
+                                    ASSERT(nullptr);
+                                    nCntNodesSet = -1;
+                                }
+                            }
+                            else
+                            {
+                                //Error
+                                ASSERT(nullptr);
+                                nCntNodesSet = -1;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            if(resFN == JNT_ERROR)
+                            {
+                                //Error
+                                ASSERT(nullptr);
+                                nCntNodesSet = -1;
+                            }
 
-							break;
-						}
-					}
+                            break;
+                        }
+                    }
 
-				}
-			}
-			else
-			{
-				//Can be only an Object node
-				ASSERT(nullptr);
-			}
-		}
-		else
-		{
-			//Can't use same JSON object
-			ASSERT(nullptr);
-		}
-	}
+                }
+            }
+            else
+            {
+                //Can be only an Object node
+                ASSERT(nullptr);
+            }
+        }
+        else
+        {
+            //Can't use same JSON object
+            ASSERT(nullptr);
+        }
+    }
 
-	return nCntNodesSet;
+    return nCntNodesSet;
 }
 
 
 bool JSON_NODE::setNodeByIndex(intptr_t nIndex, JSON_NODE* pJNode)
 {
-	//Set node with 'nIndex' in this node to a new value
-	//INFO: It makes a "deep" copy of 'pJNode'
-	//INFO: Can't be used to set nodes from the same JSON data.
-	//'nIndex' = node's 0-based index to set
-	//RETURN:
-	//		= true if success
+    //Set node with 'nIndex' in this node to a new value
+    //INFO: It makes a "deep" copy of 'pJNode'
+    //INFO: Can't be used to set nodes from the same JSON data.
+    //'nIndex' = node's 0-based index to set
+    //RETURN:
+    //		= true if success
     bool bRes = false;
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	//Node must be specified and valid
-	if(pJNode &&
-		pJSONData)
-	{
-		//Make sure that JSON data is not the same
-		if(this->pJSONData != pJNode->pJSONData &&
-			pJNode->pJSONData)
-		{
-			ASSERT(pVal);
-			if(pVal->valType == JVT_OBJECT)
-			{
-				JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-				ASSERT(pJO);
-				if(pJO)
-				{
-					//Make sure index is within limits
-					if(nIndex >= 0 &&
-						nIndex < (intptr_t)pJO->arrObjElmts.size())
-					{
-						//Pick element found
-						JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
+    //Node must be specified and valid
+    if(pJNode &&
+        pJSONData)
+    {
+        //Make sure that JSON data is not the same
+        if(this->pJSONData != pJNode->pJSONData &&
+            pJNode->pJSONData)
+        {
+            ASSERT(pVal);
+            if(pVal->valType == JVT_OBJECT)
+            {
+                JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                ASSERT(pJO);
+                if(pJO)
+                {
+                    //Make sure index is within limits
+                    if(nIndex >= 0 &&
+                        nIndex < (intptr_t)pJO->arrObjElmts.size())
+                    {
+                        //Pick element found
+                        JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
 
-						//First clear the old value
-					//	CJSON::_freeJSON_VALUE(pJOE->val);			//No need to do it -- it will be done by _deepCopyJSON_VALUE()!
+                        //First clear the old value
+                    //	CJSON::_freeJSON_VALUE(pJOE->val);			//No need to do it -- it will be done by _deepCopyJSON_VALUE()!
 
-						//And do "deep" copy
-						if(CJSON::_deepCopyJSON_VALUE(&pJOE->val, pJNode->pVal))
-						{
-							//Done
-							bRes = true;
-						}
-						else
-						{
-							//Failed
-							ASSERT(nullptr);
-						}
-					}
-				}
-			}
-			else if(pVal->valType == JVT_ARRAY)
-			{
-				JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
-				ASSERT(pJA);
-				if(pJA)
-				{
-					//Make sure index is within limits
-					if(nIndex >= 0 &&
-						nIndex < (intptr_t)pJA->arrArrElmts.size())
-					{
-						//Pick element found
-						JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
+                        //And do "deep" copy
+                        if(CJSON::_deepCopyJSON_VALUE(&pJOE->val, pJNode->pVal))
+                        {
+                            //Done
+                            bRes = true;
+                        }
+                        else
+                        {
+                            //Failed
+                            ASSERT(nullptr);
+                        }
+                    }
+                }
+            }
+            else if(pVal->valType == JVT_ARRAY)
+            {
+                JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
+                ASSERT(pJA);
+                if(pJA)
+                {
+                    //Make sure index is within limits
+                    if(nIndex >= 0 &&
+                        nIndex < (intptr_t)pJA->arrArrElmts.size())
+                    {
+                        //Pick element found
+                        JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
 
-						//First clear the old value
-					//	CJSON::_freeJSON_VALUE(pJAE->val);			//No need to do it -- it will be done by _deepCopyJSON_VALUE()!
+                        //First clear the old value
+                    //	CJSON::_freeJSON_VALUE(pJAE->val);			//No need to do it -- it will be done by _deepCopyJSON_VALUE()!
 
-						//And do "deep" copy
-						if(CJSON::_deepCopyJSON_VALUE(&pJAE->val, pJNode->pVal))
-						{
-							//Done
-							bRes = true;
-						}
-						else
-						{
-							//Failed
-							ASSERT(nullptr);
-						}
-					}
-				}
-			}
-			else
-			{
-				//Can be only an Object node
-				ASSERT(nullptr);
-			}
-		}
-		else
-		{
-			//Can't use same JSON object
-			ASSERT(nullptr);
-		}
-	}
+                        //And do "deep" copy
+                        if(CJSON::_deepCopyJSON_VALUE(&pJAE->val, pJNode->pVal))
+                        {
+                            //Done
+                            bRes = true;
+                        }
+                        else
+                        {
+                            //Failed
+                            ASSERT(nullptr);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                //Can be only an Object node
+                ASSERT(nullptr);
+            }
+        }
+        else
+        {
+            //Can't use same JSON object
+            ASSERT(nullptr);
+        }
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
 intptr_t JSON_NODE::_setNodeByName_WithType(LPCTSTR pStrName, JSON_VALUE_TYPE type, LPCTSTR pStrValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' in this node to a new value
-	//INFO: This node must be an object.
-	//'pStrName' = node name to set (cannot be empty)
-	//'type' = type to assign to value. Can be JVT_PLAIN or JVT_DOUBLE_QUOTED
-	//'pStrValue' = value
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
+    //Set node with 'pStrName' in this node to a new value
+    //INFO: This node must be an object.
+    //'pStrName' = node name to set (cannot be empty)
+    //'type' = type to assign to value. Can be JVT_PLAIN or JVT_DOUBLE_QUOTED
+    //'pStrValue' = value
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
     intptr_t nCntNodesSet = -1;
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	if(pJSONData)
-	{
-		//Check allowed types
-		if(type == JVT_PLAIN ||
-			type == JVT_DOUBLE_QUOTED)
-		{
-			ASSERT(pVal);
-			if(pVal->valType == JVT_OBJECT)
-			{
-				//Only if we have a name
-				if(pStrName &&
-					pStrName[0])
-				{
-					JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-					ASSERT(pJO);
-					if(pJO)
-					{
-						//Assume success
-						nCntNodesSet = 0;
+    if(pJSONData)
+    {
+        //Check allowed types
+        if(type == JVT_PLAIN ||
+            type == JVT_DOUBLE_QUOTED)
+        {
+            ASSERT(pVal);
+            if(pVal->valType == JVT_OBJECT)
+            {
+                //Only if we have a name
+                if(pStrName &&
+                    pStrName[0])
+                {
+                    JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                    ASSERT(pJO);
+                    if(pJO)
+                    {
+                        //Assume success
+                        nCntNodesSet = 0;
 
-						//Start looking for needed nodes
-						for(JSON_SRCH jSrch;;)
-						{
-							//Find next node by name
-							JSON_NODE_TYPE resFN = findNodeByName(pStrName, nullptr, bCaseSensitive, &jSrch);
-							if(resFN > JNT_NONE)
-							{
+                        //Start looking for needed nodes
+                        for(JSON_SRCH jSrch;;)
+                        {
+                            //Find next node by name
+                            JSON_NODE_TYPE resFN = findNodeByName(pStrName, nullptr, bCaseSensitive, &jSrch);
+                            if(resFN > JNT_NONE)
+                            {
                                 intptr_t nFndInd = jSrch.getIndexFoundAt();
-								if(nFndInd >= 0 &&
-									nFndInd < (intptr_t)pJO->arrObjElmts.size())
-								{
-									//Pick element found
-									JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nFndInd];
+                                if(nFndInd >= 0 &&
+                                    nFndInd < (intptr_t)pJO->arrObjElmts.size())
+                                {
+                                    //Pick element found
+                                    JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nFndInd];
 
-									//First clear the old value
-									CJSON::_freeJSON_VALUE(pJOE->val);
+                                    //First clear the old value
+                                    CJSON::_freeJSON_VALUE(pJOE->val);
 
-									//And set new simple value
-									pJOE->strName = pStrName;
+                                    //And set new simple value
+                                    pJOE->strName = pStrName;
 
-									//And value
-									pJOE->val.valType = type;
-									pJOE->val.strValue = pStrValue ? pStrValue : L("");
-									pJOE->val.pValue = nullptr;
+                                    //And value
+                                    pJOE->val.valType = type;
+                                    pJOE->val.strValue = pStrValue ? pStrValue : L("");
+                                    pJOE->val.pValue = nullptr;
 
-									if(type == JVT_PLAIN)
-									{
-										//Trim value
-										CJSON::Trim(pJOE->val.strValue);
-									}
+                                    if(type == JVT_PLAIN)
+                                    {
+                                        //Trim value
+                                        CJSON::Trim(pJOE->val.strValue);
+                                    }
 
-									//Count the ones set
-									if(nCntNodesSet >= 0)
-										nCntNodesSet++;
-								}
-								else
-								{
-									//Error
-									ASSERT(nullptr);
-									nCntNodesSet = -1;
-									break;
-								}
-							}
-							else
-							{
-								if(resFN == JNT_ERROR)
-								{
-									//Error
-									ASSERT(nullptr);
-									nCntNodesSet = -1;
-								}
+                                    //Count the ones set
+                                    if(nCntNodesSet >= 0)
+                                        nCntNodesSet++;
+                                }
+                                else
+                                {
+                                    //Error
+                                    ASSERT(nullptr);
+                                    nCntNodesSet = -1;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                if(resFN == JNT_ERROR)
+                                {
+                                    //Error
+                                    ASSERT(nullptr);
+                                    nCntNodesSet = -1;
+                                }
 
-								break;
-							}
-						}
+                                break;
+                            }
+                        }
 
-					}
-				}
-			}
-			else
-			{
-				//Can add only to the Array or Object note
-				ASSERT(nullptr);
-			}
-		}
-	}
+                    }
+                }
+            }
+            else
+            {
+                //Can add only to the Array or Object note
+                ASSERT(nullptr);
+            }
+        }
+    }
 
-	return nCntNodesSet;
+    return nCntNodesSet;
 }
 
 
 intptr_t JSON_NODE::setNodeByName_String(LPCTSTR pStrName, LPCTSTR pStrValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'pStrValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'pStrValue' = value to set
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
-	return _setNodeByName_WithType(pStrName, JVT_DOUBLE_QUOTED, pStrValue, bCaseSensitive);
+    //Set node with 'pStrName' to the 'pStrValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'pStrValue' = value to set
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
+    return _setNodeByName_WithType(pStrName, JVT_DOUBLE_QUOTED, pStrValue, bCaseSensitive);
 }
 
 intptr_t JSON_NODE::setNodeByName_BOOL(LPCTSTR pStrName, bool bValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'bValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'bValue' = value to set
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"), bCaseSensitive);
+    //Set node with 'pStrName' to the 'bValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'bValue' = value to set
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"), bCaseSensitive);
 }
 intptr_t JSON_NODE::setNodeByName_Bool(LPCTSTR pStrName, bool bValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'bValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'bValue' = value to set
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"), bCaseSensitive);
+    //Set node with 'pStrName' to the 'bValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'bValue' = value to set
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, bValue ? L("true") : L("false"), bCaseSensitive);
 }
 
 intptr_t JSON_NODE::setNodeByName_Null(LPCTSTR pStrName, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the null value
-	//'pStrName' = node name to set (cannot be empty)
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, L("null"), bCaseSensitive);
+    //Set node with 'pStrName' to the null value
+    //'pStrName' = node name to set (cannot be empty)
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, L("null"), bCaseSensitive);
 }
 
 intptr_t JSON_NODE::setNodeByName_Int(LPCTSTR pStrName, LPCTSTR pStrValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'pStrValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'pStrValue' = value to set -- it must be an intefer
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
+    //Set node with 'pStrName' to the 'pStrValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'pStrValue' = value to set -- it must be an intefer
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
 
-	//Check if number
-	if(!CJSON::isIntegerBase10String(pStrValue))
-		return -1;
+    //Check if number
+    if(!CJSON::isIntegerBase10String(pStrValue))
+        return -1;
 
-	//And add it
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, pStrValue, bCaseSensitive);
+    //And add it
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, pStrValue, bCaseSensitive);
 }
 
 intptr_t JSON_NODE::setNodeByName_Int(LPCTSTR pStrName, int nValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'pStrValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'nValue' = value to set
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
+    //Set node with 'pStrName' to the 'pStrValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'nValue' = value to set
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
 
-	//And add it
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%d"), nValue).c_str(), bCaseSensitive);
+    //And add it
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%d"), nValue).c_str(), bCaseSensitive);
 }
 
 intptr_t JSON_NODE::setNodeByName_Int64(LPCTSTR pStrName, LPCTSTR pStrValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'pStrValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'pStrValue' = value to set -- it must be an integer
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
-	return setNodeByName_Int(pStrName, pStrValue, bCaseSensitive);
+    //Set node with 'pStrName' to the 'pStrValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'pStrValue' = value to set -- it must be an integer
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
+    return setNodeByName_Int(pStrName, pStrValue, bCaseSensitive);
 }
 
 intptr_t JSON_NODE::setNodeByName_Int64(LPCTSTR pStrName, int64_t iiValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'pStrValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'iiValue' = value to set
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
+    //Set node with 'pStrName' to the 'pStrValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'iiValue' = value to set
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
 
-	//And add it
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%lld"), iiValue).c_str(), bCaseSensitive);
+    //And add it
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%lld"), iiValue).c_str(), bCaseSensitive);
 }
 
 
 intptr_t JSON_NODE::setNodeByName_Double(LPCTSTR pStrName, LPCTSTR pStrValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'pStrValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'pStrValue' = value to set -- it must be a floating point value
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
+    //Set node with 'pStrName' to the 'pStrValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'pStrValue' = value to set -- it must be a floating point value
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
 
-	//Check if number
-	if(!CJSON::isFloatingPointNumberString(pStrValue))
-		return -1;
+    //Check if number
+    if(!CJSON::isFloatingPointNumberString(pStrValue))
+        return -1;
 
-	//And add it
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, pStrValue, bCaseSensitive);
+    //And add it
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, pStrValue, bCaseSensitive);
 }
 
 intptr_t JSON_NODE::setNodeByName_Double(LPCTSTR pStrName, double fValue, bool bCaseSensitive)
 {
-	//Set node with 'pStrName' to the 'pStrValue'
-	//'pStrName' = node name to set (cannot be empty)
-	//'fValue' = value to set
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes set, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error setting (some elements might have been copied into destination node)
+    //Set node with 'pStrName' to the 'pStrValue'
+    //'pStrName' = node name to set (cannot be empty)
+    //'fValue' = value to set
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes set, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error setting (some elements might have been copied into destination node)
 
-	//And add it
-	return _setNodeByName_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%f"), fValue).c_str(), bCaseSensitive);
+    //And add it
+    return _setNodeByName_WithType(pStrName, JVT_PLAIN, CJSON::easyFormat(L("%f"), fValue).c_str(), bCaseSensitive);
 }
 
 
@@ -3073,386 +3073,386 @@ intptr_t JSON_NODE::setNodeByName_Double(LPCTSTR pStrName, double fValue, bool b
 
 bool JSON_NODE::_setNodeByIndex_WithType(intptr_t nIndex, JSON_VALUE_TYPE type, LPCTSTR pStrValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'type' = type to assign to value. Can be JVT_PLAIN or JVT_DOUBLE_QUOTED
-	//'pStrValue' = value
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'type' = type to assign to value. Can be JVT_PLAIN or JVT_DOUBLE_QUOTED
+    //'pStrValue' = value
+    //RETURN:
+    //		= true if success
     bool bRes = false;
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	if(pJSONData)
-	{
-		//Check allowed types
-		if(type == JVT_PLAIN ||
-			type == JVT_DOUBLE_QUOTED)
-		{
-			ASSERT(pVal);
-			if(pVal->valType == JVT_OBJECT)
-			{
-				JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-				ASSERT(pJO);
-				if(pJO)
-				{
-					//Make sure index is within limits
-					if(nIndex >= 0 &&
-						nIndex < (intptr_t)pJO->arrObjElmts.size())
-					{
-						//Pick element found
-						JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
+    if(pJSONData)
+    {
+        //Check allowed types
+        if(type == JVT_PLAIN ||
+            type == JVT_DOUBLE_QUOTED)
+        {
+            ASSERT(pVal);
+            if(pVal->valType == JVT_OBJECT)
+            {
+                JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+                ASSERT(pJO);
+                if(pJO)
+                {
+                    //Make sure index is within limits
+                    if(nIndex >= 0 &&
+                        nIndex < (intptr_t)pJO->arrObjElmts.size())
+                    {
+                        //Pick element found
+                        JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
 
-						//First clear the old value
-						CJSON::_freeJSON_VALUE(pJOE->val);
+                        //First clear the old value
+                        CJSON::_freeJSON_VALUE(pJOE->val);
 
-						//And set new simple value
-						pJOE->val.valType = type;
-						pJOE->val.strValue = pStrValue ? pStrValue : L("");
-						pJOE->val.pValue = nullptr;
+                        //And set new simple value
+                        pJOE->val.valType = type;
+                        pJOE->val.strValue = pStrValue ? pStrValue : L("");
+                        pJOE->val.pValue = nullptr;
 
-						if(type == JVT_PLAIN)
-						{
-							//Trim value
-							CJSON::Trim(pJOE->val.strValue);
-						}
+                        if(type == JVT_PLAIN)
+                        {
+                            //Trim value
+                            CJSON::Trim(pJOE->val.strValue);
+                        }
 
-						//Done
-						bRes = true;
-					}
-				}
-			}
-			else if(pVal->valType == JVT_ARRAY)
-			{
-				JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
-				ASSERT(pJA);
-				if(pJA)
-				{
-					//Make sure index is within limits
-					if(nIndex >= 0 &&
-						nIndex < (intptr_t)pJA->arrArrElmts.size())
-					{
-						//Pick element found
-						JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
+                        //Done
+                        bRes = true;
+                    }
+                }
+            }
+            else if(pVal->valType == JVT_ARRAY)
+            {
+                JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
+                ASSERT(pJA);
+                if(pJA)
+                {
+                    //Make sure index is within limits
+                    if(nIndex >= 0 &&
+                        nIndex < (intptr_t)pJA->arrArrElmts.size())
+                    {
+                        //Pick element found
+                        JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
 
-						//First clear the old value
-						CJSON::_freeJSON_VALUE(pJAE->val);
+                        //First clear the old value
+                        CJSON::_freeJSON_VALUE(pJAE->val);
 
-						//And set new simple value
-						pJAE->val.valType = type;
-						pJAE->val.strValue = pStrValue ? pStrValue : L("");
-						pJAE->val.pValue = nullptr;
+                        //And set new simple value
+                        pJAE->val.valType = type;
+                        pJAE->val.strValue = pStrValue ? pStrValue : L("");
+                        pJAE->val.pValue = nullptr;
 
-						if(type == JVT_PLAIN)
-						{
-							//Trim value
-							CJSON::Trim(pJAE->val.strValue);
-						}
+                        if(type == JVT_PLAIN)
+                        {
+                            //Trim value
+                            CJSON::Trim(pJAE->val.strValue);
+                        }
 
-						//Done
-						bRes = true;
-					}
-				}
-			}
-			else
-			{
-				//Can add only to the Array or Object note
-				ASSERT(nullptr);
-			}
-		}
-	}
+                        //Done
+                        bRes = true;
+                    }
+                }
+            }
+            else
+            {
+                //Can add only to the Array or Object note
+                ASSERT(nullptr);
+            }
+        }
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
 bool JSON_NODE::setNodeByIndex_String(intptr_t nIndex, LPCTSTR pStrValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'pStrValue' = value to set
-	//RETURN:
-	//		= true if success
-	return _setNodeByIndex_WithType(nIndex, JVT_DOUBLE_QUOTED, pStrValue);
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'pStrValue' = value to set
+    //RETURN:
+    //		= true if success
+    return _setNodeByIndex_WithType(nIndex, JVT_DOUBLE_QUOTED, pStrValue);
 }
 
 bool JSON_NODE::setNodeByIndex_BOOL(intptr_t nIndex, bool bValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'bValue' = value to set
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'bValue' = value to set
+    //RETURN:
+    //		= true if success
 
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, bValue ? L("true") : L("false"));
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, bValue ? L("true") : L("false"));
 }
 
 bool JSON_NODE::setNodeByIndex_Bool(intptr_t nIndex, bool bValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'bValue' = value to set
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'bValue' = value to set
+    //RETURN:
+    //		= true if success
 
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, bValue ? L("true") : L("false"));
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, bValue ? L("true") : L("false"));
 }
 
 bool JSON_NODE::setNodeByIndex_Null(intptr_t nIndex)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //RETURN:
+    //		= true if success
 
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, L("null"));
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, L("null"));
 }
 
 bool JSON_NODE::setNodeByIndex_Int(intptr_t nIndex, LPCTSTR pStrValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'pStrValue' = value to set -- must be an integer
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'pStrValue' = value to set -- must be an integer
+    //RETURN:
+    //		= true if success
 
-	//Check if number
-	if(!CJSON::isIntegerBase10String(pStrValue))
-		return false;
+    //Check if number
+    if(!CJSON::isIntegerBase10String(pStrValue))
+        return false;
 
-	//And add it
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, pStrValue);
+    //And add it
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, pStrValue);
 }
 
 bool JSON_NODE::setNodeByIndex_Int(intptr_t nIndex, int nValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'nValue' = value to set
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'nValue' = value to set
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, CJSON::easyFormat(L("%d"), nValue).c_str());
+    //And add it
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, CJSON::easyFormat(L("%d"), nValue).c_str());
 }
 
 bool JSON_NODE::setNodeByIndex_Int64(intptr_t nIndex, LPCTSTR pStrValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'pStrValue' = value to set -- must be an integer
-	//RETURN:
-	//		= true if success
-	return setNodeByIndex_Int(nIndex, pStrValue);
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'pStrValue' = value to set -- must be an integer
+    //RETURN:
+    //		= true if success
+    return setNodeByIndex_Int(nIndex, pStrValue);
 }
 
 bool JSON_NODE::setNodeByIndex_Int64(intptr_t nIndex, int64_t iiValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'iiValue' = value to set
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'iiValue' = value to set
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, CJSON::easyFormat(L("%lld"), iiValue).c_str());
+    //And add it
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, CJSON::easyFormat(L("%lld"), iiValue).c_str());
 }
 
 
 bool JSON_NODE::setNodeByIndex_Double(intptr_t nIndex, LPCTSTR pStrValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'pStrValue' = value to set -- must be a floating point number
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'pStrValue' = value to set -- must be a floating point number
+    //RETURN:
+    //		= true if success
 
-	//Check if number
-	if(!CJSON::isFloatingPointNumberString(pStrValue))
-		return false;
+    //Check if number
+    if(!CJSON::isFloatingPointNumberString(pStrValue))
+        return false;
 
-	//And add it
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, pStrValue);
+    //And add it
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, pStrValue);
 }
 
 bool JSON_NODE::setNodeByIndex_Double(intptr_t nIndex, double fValue)
 {
-	//Set node at 'nIndex' in this node to a new value
-	//INFO: This node must be an object or an array.
-	//'nIndex' = 0-based index of the node to set
-	//'fValue' = value to set
-	//RETURN:
-	//		= true if success
+    //Set node at 'nIndex' in this node to a new value
+    //INFO: This node must be an object or an array.
+    //'nIndex' = 0-based index of the node to set
+    //'fValue' = value to set
+    //RETURN:
+    //		= true if success
 
-	//And add it
-	return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, CJSON::easyFormat(L("%f"), fValue).c_str());
+    //And add it
+    return _setNodeByIndex_WithType(nIndex, JVT_PLAIN, CJSON::easyFormat(L("%f"), fValue).c_str());
 }
 
 
 
 intptr_t JSON_NODE::removeNodeByName(LPCTSTR pStrName, bool bCaseSensitive)
 {
-	//Remove nodes from this node that match the name
-	//'pStrName' = node name to remove (cannot be empty)
-	//'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
-	//RETURN:
-	//		= [1 and up) number if nodes removed, or
-	//		= 0 if no nodes matched the name provided
-	//		= -1 if error (some elements might have been removed)
+    //Remove nodes from this node that match the name
+    //'pStrName' = node name to remove (cannot be empty)
+    //'bCaseSensitive' = true if 'pStrName' should be matched in case-sensitive way, false if not
+    //RETURN:
+    //		= [1 and up) number if nodes removed, or
+    //		= 0 if no nodes matched the name provided
+    //		= -1 if error (some elements might have been removed)
     intptr_t nCntDel = -1;
 
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	//Node must be specified and it must have a name
-	if(pStrName &&
-		pStrName[0] &&
-		pJSONData)
-	{
-		ASSERT(pVal);
-		if(pVal->valType == JVT_OBJECT)
-		{
-			JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-			ASSERT(pJO);
-			if(pJO)
-			{
-				//Assume success
-				nCntDel = 0;
+    //Node must be specified and it must have a name
+    if(pStrName &&
+        pStrName[0] &&
+        pJSONData)
+    {
+        ASSERT(pVal);
+        if(pVal->valType == JVT_OBJECT)
+        {
+            JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+            ASSERT(pJO);
+            if(pJO)
+            {
+                //Assume success
+                nCntDel = 0;
 
-				//Start looking for needed nodes
-				for(;;)
-				{
-					//Find next node by name
-					JSON_SRCH jSrch;		//Place it here, because we're removing elements from array, so need to start from index 0!
-					JSON_NODE_TYPE resFN = findNodeByName(pStrName, nullptr, bCaseSensitive, &jSrch);
-					if(resFN > JNT_NONE)
-					{
+                //Start looking for needed nodes
+                for(;;)
+                {
+                    //Find next node by name
+                    JSON_SRCH jSrch;		//Place it here, because we're removing elements from array, so need to start from index 0!
+                    JSON_NODE_TYPE resFN = findNodeByName(pStrName, nullptr, bCaseSensitive, &jSrch);
+                    if(resFN > JNT_NONE)
+                    {
                         intptr_t nFndInd = jSrch.getIndexFoundAt();
-						if(nFndInd >= 0 &&
-							nFndInd < (intptr_t)pJO->arrObjElmts.size())
-						{
-							//Pick element found
-							JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nFndInd];
+                        if(nFndInd >= 0 &&
+                            nFndInd < (intptr_t)pJO->arrObjElmts.size())
+                        {
+                            //Pick element found
+                            JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nFndInd];
 
-							//First clear the old value
-							CJSON::_freeJSON_VALUE(pJOE->val);
+                            //First clear the old value
+                            CJSON::_freeJSON_VALUE(pJOE->val);
 
-							//Then remove the element itself
-							pJO->arrObjElmts.erase(pJO->arrObjElmts.begin() + nFndInd);
+                            //Then remove the element itself
+                            pJO->arrObjElmts.erase(pJO->arrObjElmts.begin() + nFndInd);
 
-							//Count the ones deleted
-							if(nCntDel >= 0)
-								nCntDel++;
+                            //Count the ones deleted
+                            if(nCntDel >= 0)
+                                nCntDel++;
 
-						}
-						else
-						{
-							//Error
-							ASSERT(nullptr);
-							nCntDel = -1;
-							break;
-						}
-					}
-					else
-					{
-						if(resFN == JNT_ERROR)
-						{
-							//Error
-							ASSERT(nullptr);
-							nCntDel = -1;
-						}
+                        }
+                        else
+                        {
+                            //Error
+                            ASSERT(nullptr);
+                            nCntDel = -1;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if(resFN == JNT_ERROR)
+                        {
+                            //Error
+                            ASSERT(nullptr);
+                            nCntDel = -1;
+                        }
 
-						break;
-					}
-				}
+                        break;
+                    }
+                }
 
-			}
-		}
-		else
-			ASSERT(nullptr);		//Can be only an object node
-	}
+            }
+        }
+        else
+            ASSERT(nullptr);		//Can be only an object node
+    }
 
-	return nCntDel;
+    return nCntDel;
 }
 
 
 bool JSON_NODE::removeNodeByIndex(intptr_t nIndex)
 {
-	//Remove node from this node by the 'nIndex'
-	//'nIndex' = node's 0-based index to remove
-	//RETURN:
-	//		= true if removed OK
+    //Remove node from this node by the 'nIndex'
+    //'nIndex' = node's 0-based index to remove
+    //RETURN:
+    //		= true if removed OK
     bool bRes = false;
-	ASSERT(pJSONData);
+    ASSERT(pJSONData);
 
-	//Node must be specified and valid
-	if(pJSONData)
-	{
-		ASSERT(pVal);
-		if(pVal->valType == JVT_OBJECT)
-		{
-			JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
-			ASSERT(pJO);
-			if(pJO)
-			{
-				//Make sure index is within limits
-				if(nIndex >= 0 &&
-					nIndex < (intptr_t)pJO->arrObjElmts.size())
-				{
-					//Pick element found
-					JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
+    //Node must be specified and valid
+    if(pJSONData)
+    {
+        ASSERT(pVal);
+        if(pVal->valType == JVT_OBJECT)
+        {
+            JSON_OBJECT* pJO = (JSON_OBJECT*)pVal->pValue;
+            ASSERT(pJO);
+            if(pJO)
+            {
+                //Make sure index is within limits
+                if(nIndex >= 0 &&
+                    nIndex < (intptr_t)pJO->arrObjElmts.size())
+                {
+                    //Pick element found
+                    JSON_OBJECT_ELEMENT* pJOE = &pJO->arrObjElmts[nIndex];
 
-					//First clear the old value
-					CJSON::_freeJSON_VALUE(pJOE->val);
+                    //First clear the old value
+                    CJSON::_freeJSON_VALUE(pJOE->val);
 
-					//Then remove the element itself
-					pJO->arrObjElmts.erase(pJO->arrObjElmts.begin() + nIndex);
+                    //Then remove the element itself
+                    pJO->arrObjElmts.erase(pJO->arrObjElmts.begin() + nIndex);
 
-					//Done
-					bRes = true;
-				}
-			}
-		}
-		else if(pVal->valType == JVT_ARRAY)
-		{
-			JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
-			ASSERT(pJA);
-			if(pJA)
-			{
-				//Make sure index is within limits
-				if(nIndex >= 0 &&
-					nIndex < (intptr_t)pJA->arrArrElmts.size())
-				{
-					//Pick element found
-					JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
+                    //Done
+                    bRes = true;
+                }
+            }
+        }
+        else if(pVal->valType == JVT_ARRAY)
+        {
+            JSON_ARRAY* pJA = (JSON_ARRAY*)pVal->pValue;
+            ASSERT(pJA);
+            if(pJA)
+            {
+                //Make sure index is within limits
+                if(nIndex >= 0 &&
+                    nIndex < (intptr_t)pJA->arrArrElmts.size())
+                {
+                    //Pick element found
+                    JSON_ARRAY_ELEMENT* pJAE = &pJA->arrArrElmts[nIndex];
 
-					//First clear the old value
-					CJSON::_freeJSON_VALUE(pJAE->val);
+                    //First clear the old value
+                    CJSON::_freeJSON_VALUE(pJAE->val);
 
-					//Then remove the element itself
-					pJA->arrArrElmts.erase(pJA->arrArrElmts.begin() + nIndex);
+                    //Then remove the element itself
+                    pJA->arrArrElmts.erase(pJA->arrArrElmts.begin() + nIndex);
 
-					//Done
-					bRes = true;
-				}
-			}
-		}
-		else
-		{
-			//Can be only an Object or Array node
-			ASSERT(nullptr);
-		}
-	}
+                    //Done
+                    bRes = true;
+                }
+            }
+        }
+        else
+        {
+            //Can be only an Object or Array node
+            ASSERT(nullptr);
+        }
+    }
 
-	return bRes;
+    return bRes;
 }
 
 
@@ -3528,15 +3528,15 @@ int JSON_NODE::_compareStringsEqualNoCase_macOS(const char* pStr1,
 
 bool JSON_NODE::compareStringsEqual(LPCTSTR pStr1, LPCTSTR pStr2, bool bCaseSensitive)
 {
-	//RETURN:
-	//		= true if strings are equal
+    //RETURN:
+    //		= true if strings are equal
 
-	if(pStr1 &&
-		pStr2)
-	{
+    if(pStr1 &&
+        pStr2)
+    {
 #ifdef _WIN32
         //Windows specific
-		return CompareStringEx(LOCALE_NAME_SYSTEM_DEFAULT, 
+        return CompareStringEx(LOCALE_NAME_SYSTEM_DEFAULT, 
                                bCaseSensitive ? 0 : NORM_IGNORECASE,
                                pStr1, -1,
                                pStr2, -1,
@@ -3570,25 +3570,25 @@ bool JSON_NODE::compareStringsEqual(LPCTSTR pStr1, LPCTSTR pStr2, bool bCaseSens
         return bRes;
         
 #endif
-	}
-	else if(!pStr1 && !pStr2)
-	{
-		return true;
-	}
+    }
+    else if(!pStr1 && !pStr2)
+    {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 bool JSON_NODE::compareStringsEqual(LPCTSTR pStr1, intptr_t nchLn1, LPCTSTR pStr2, intptr_t nchLn2, bool bCaseSensitive)
 {
-	//'nchLn1' = length of 'pStr1' in WCHARs, or -1 to calculate automatically
-	//'nchLn2' = length of 'pStr2' in WCHARs, or -1 to calculate automatically
-	//RETURN:
-	//		= true if strings are equal
+    //'nchLn1' = length of 'pStr1' in WCHARs, or -1 to calculate automatically
+    //'nchLn2' = length of 'pStr2' in WCHARs, or -1 to calculate automatically
+    //RETURN:
+    //		= true if strings are equal
 
-	if(pStr1 &&
-		pStr2)
-	{
+    if(pStr1 &&
+        pStr2)
+    {
 #ifdef _WIN32
         //Windows specific
         
@@ -3634,27 +3634,27 @@ bool JSON_NODE::compareStringsEqual(LPCTSTR pStr1, intptr_t nchLn1, LPCTSTR pStr
             return _compareStringsEqualNoCase_macOS(pStr1, nchLn1, pStr2, nchLn2) == 1;
         }
 #endif
-	}
-	else if(!pStr1 && !pStr2)
-	{
-		return true;
-	}
+    }
+    else if(!pStr1 && !pStr2)
+    {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 bool JSON_NODE::compareStringsEqual(std_wstring& str1, std_wstring& str2, bool bCaseSensitive)
 {
-	//RETURN:
-	//		= true if strings are equal
-	return compareStringsEqual(str1.c_str(), str1.size(), str2.c_str(), str2.size(), bCaseSensitive);
+    //RETURN:
+    //		= true if strings are equal
+    return compareStringsEqual(str1.c_str(), str1.size(), str2.c_str(), str2.size(), bCaseSensitive);
 }
 
 bool JSON_NODE::compareStringsEqual(std_wstring& str1, LPCTSTR pStr2, bool bCaseSensitive)
 {
-	//RETURN:
-	//		= true if strings are equal
-	return compareStringsEqual(str1.c_str(), str1.size(), pStr2, -1, bCaseSensitive);
+    //RETURN:
+    //		= true if strings are equal
+    return compareStringsEqual(str1.c_str(), str1.size(), pStr2, -1, bCaseSensitive);
 }
 
 
@@ -3841,12 +3841,12 @@ intptr_t JSON_NODE::getUtf8Char(const char* pStr,
 
 bool CJSON::getStringForUTF8(LPCTSTR pStr, std::string& strOut)
 {
-	//Convert 'pStr' into UTF-8 string
+    //Convert 'pStr' into UTF-8 string
     //'strOut' = receives encoding string as a sequence of bytes
-	//RETURN:
-	//		= true if success
-	//		= false if error (check CJSON::GetLastError() for info)
-	return getStringForEncoding(pStr, JENC_UTF_8, strOut);
+    //RETURN:
+    //		= true if success
+    //		= false if error (check CJSON::GetLastError() for info)
+    return getStringForEncoding(pStr, JENC_UTF_8, strOut);
 }
 
 bool CJSON::getStringForEncoding(LPCTSTR pStr, JSON_ENCODING enc, std::string& strOut
@@ -3855,27 +3855,27 @@ bool CJSON::getStringForEncoding(LPCTSTR pStr, JSON_ENCODING enc, std::string& s
 #endif
                                  )
 {
-	//Convert 'pStr' into some other encoding
+    //Convert 'pStr' into some other encoding
     //'enc' = encoding to convert into
     //'strOut' = receives encoding string as a sequence of bytes
-	//'pbOutDataLoss' = if not nullptr, will receive true if data loss occurred during conversion
+    //'pbOutDataLoss' = if not nullptr, will receive true if data loss occurred during conversion
     //                  INFO: Works only on Windows!
-	//RETURN:
-	//		= true if success
-	//		= false if error -- check CJSON::GetLastError() for info
+    //RETURN:
+    //		= true if success
+    //		= false if error -- check CJSON::GetLastError() for info
     bool bRes = false;
-	int nOSError = NO_ERROR;
+    int nOSError = NO_ERROR;
 
 #ifdef _WIN32
     bool bUsedDefault = false;
 #endif
 
     //Free string
-	strOut.clear();
+    strOut.clear();
 
-	if(pStr &&
-		pStr[0])
-	{
+    if(pStr &&
+        pStr[0])
+    {
 #ifdef _WIN32
         //Windows specific
         UINT nCodePage;
@@ -4043,11 +4043,11 @@ bool CJSON::getStringForEncoding(LPCTSTR pStr, JSON_ENCODING enc, std::string& s
             nOSError = ERROR_INVALID_PARAMETER;
 #endif
     }
-	else
-	{
-		//Empty string
-		bRes = true;
-	}
+    else
+    {
+        //Empty string
+        bRes = true;
+    }
 
 #ifdef _WIN32
     if(pbOutDataLoss)
@@ -4055,37 +4055,37 @@ bool CJSON::getStringForEncoding(LPCTSTR pStr, JSON_ENCODING enc, std::string& s
 #endif
     
     CJSON::SetLastError(nOSError);
-	return bRes;
+    return bRes;
 }
 
 
 
 bool CJSON::getUnicodeStringFromEncoding(const char* pAStr, intptr_t ncbLen, JSON_ENCODING enc, std_wstring* pOutUnicodeStr)
 {
-	//Convert 'pAStr' encoded sequence into the Unicode string
+    //Convert 'pAStr' encoded sequence into the Unicode string
     //INFO: For Microsoft it is UTF-16, and for Apple it's UTF-8.
-	//'pAStr' = Byte sequence to convert
-	//'ncbLen' = Length of 'pAStr' in bytes, or -1 if it's a null-terminated string
-	//'enc' = Encoding that 'pAStr' was encoded with
-	//RETURN:
-	//		= true if success, and 'pOutUnicodeStr' received the data (must NOT be nullptr!)
-	//		= false if error (use CJSON::GetLastError() for details)
+    //'pAStr' = Byte sequence to convert
+    //'ncbLen' = Length of 'pAStr' in bytes, or -1 if it's a null-terminated string
+    //'enc' = Encoding that 'pAStr' was encoded with
+    //RETURN:
+    //		= true if success, and 'pOutUnicodeStr' received the data (must NOT be nullptr!)
+    //		= false if error (use CJSON::GetLastError() for details)
     bool bRes = false;
     int nOSError = NO_ERROR;
     ASSERT(pOutUnicodeStr);
     
     pOutUnicodeStr->clear();
 
-	//Do we have the length
-	if(ncbLen < 0)
-	{
+    //Do we have the length
+    if(ncbLen < 0)
+    {
         ncbLen = 0;
-		while(pAStr[ncbLen])
+        while(pAStr[ncbLen])
             ncbLen++;
-	}
+    }
 
-	if(ncbLen)
-	{
+    if(ncbLen)
+    {
 #ifdef _WIN32
         //Windows specific
         UINT nCodePage;
@@ -4284,15 +4284,15 @@ bool CJSON::getUnicodeStringFromEncoding(const char* pAStr, intptr_t ncbLen, JSO
         
 #endif
     }
-	else
-	{
-		//Empty string
-		pOutUnicodeStr->clear();
-		bRes = true;
-	}
+    else
+    {
+        //Empty string
+        pOutUnicodeStr->clear();
+        bRes = true;
+    }
 
     CJSON::SetLastError(nOSError);
-	return bRes;
+    return bRes;
 }
 
 bool CJSON::convertStringToUnicode(const char* pAStr, intptr_t ncbLen, JSON_ENCODING enc, std_wstring* pOutUnicodeStr)
@@ -4305,91 +4305,91 @@ bool CJSON::convertStringToUnicode(const char* pAStr, intptr_t ncbLen, JSON_ENCO
     //RETURN:
     //        = true if success, and 'pOutUnicodeStr' received the data (must NOT be nullptr!)
     //        = false if error (use CJSON::GetLastError() for details)
-	return CJSON::getUnicodeStringFromEncoding(pAStr, ncbLen, enc, pOutUnicodeStr);
+    return CJSON::getUnicodeStringFromEncoding(pAStr, ncbLen, enc, pOutUnicodeStr);
 }
 
 bool CJSON::readFileContents(LPCTSTR pStrFilePath, BYTE** ppOutData, UINT* pncbOutDataSz, UINT ncbSzMaxFileSz)
 {
-	//Read file contents into a BYTE array
-	//'pStrFilePath' = file path
-	//'ppOutData' = if not nullptr, receives pointer to the BYTE array (must be removed with delete[]!)
-	//'pncbOutDataSz' = if not nullptr, receives the size of 'ppOutData' array in BYTEs
-	//'ncbSzMaxFileSz' = if not 0, maximum allowed file size in BYTEs
-	//RETURN:
-	//		= true if success
-	//		= false if failed (check CJSON::GetLastError() for info)
+    //Read file contents into a BYTE array
+    //'pStrFilePath' = file path
+    //'ppOutData' = if not nullptr, receives pointer to the BYTE array (must be removed with delete[]!)
+    //'pncbOutDataSz' = if not nullptr, receives the size of 'ppOutData' array in BYTEs
+    //'ncbSzMaxFileSz' = if not 0, maximum allowed file size in BYTEs
+    //RETURN:
+    //		= true if success
+    //		= false if failed (check CJSON::GetLastError() for info)
     bool bRes = false;
-	int nOSError = NO_ERROR;
-	BYTE* pFileData = nullptr;
-	UINT ncbSzFileData = 0;
+    int nOSError = NO_ERROR;
+    BYTE* pFileData = nullptr;
+    UINT ncbSzFileData = 0;
 
-	if(pStrFilePath &&
-		pStrFilePath[0])
-	{
+    if(pStrFilePath &&
+        pStrFilePath[0])
+    {
 #ifdef _WIN32
         //Windows specific
 
-		//Open file
-		HANDLE hFile = ::CreateFile(pStrFilePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-			OPEN_EXISTING, 0, nullptr);
-		if(hFile != INVALID_HANDLE_VALUE)
-		{
-			LARGE_INTEGER liSz = {0};
-			if(::GetFileSizeEx(hFile, &liSz))
-			{
-				//Check file size (if needed)
-				if(!ncbSzMaxFileSz ||
-					liSz.QuadPart <= ncbSzMaxFileSz)
-				{
-					//Reserve mem
-					ncbSzFileData = (UINT)liSz.QuadPart;
-					pFileData = new (std::nothrow) BYTE[ncbSzFileData];
-					if(pFileData)
-					{
-						//Read data
-						DWORD dwcbRead = 0;
-						if(::ReadFile(hFile, pFileData, ncbSzFileData, &dwcbRead, nullptr))
-						{
-							if(ncbSzFileData == dwcbRead)
-							{
-								//Got!
-								bRes = true;
-							}
-							else
-							{
-								//Bad size read
-								nOSError = ERROR_BAD_LENGTH;
-							}
-						}
-						else
-						{
-							//Error
-							nOSError = ::GetLastError();
-						}
-					}
-					else
-					{
-						//Memory failed
-						nOSError = ERROR_NOT_ENOUGH_MEMORY;
-					}
-				}
-				else
-				{
-					//File is too large
-					nOSError = ERROR_FILE_TOO_LARGE;
-				}
-			}
-			else
-			{
-				//Error
-				nOSError = ::GetLastError();
-			}
+        //Open file
+        HANDLE hFile = ::CreateFile(pStrFilePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+            OPEN_EXISTING, 0, nullptr);
+        if(hFile != INVALID_HANDLE_VALUE)
+        {
+            LARGE_INTEGER liSz = {0};
+            if(::GetFileSizeEx(hFile, &liSz))
+            {
+                //Check file size (if needed)
+                if(!ncbSzMaxFileSz ||
+                    liSz.QuadPart <= ncbSzMaxFileSz)
+                {
+                    //Reserve mem
+                    ncbSzFileData = (UINT)liSz.QuadPart;
+                    pFileData = new (std::nothrow) BYTE[ncbSzFileData];
+                    if(pFileData)
+                    {
+                        //Read data
+                        DWORD dwcbRead = 0;
+                        if(::ReadFile(hFile, pFileData, ncbSzFileData, &dwcbRead, nullptr))
+                        {
+                            if(ncbSzFileData == dwcbRead)
+                            {
+                                //Got!
+                                bRes = true;
+                            }
+                            else
+                            {
+                                //Bad size read
+                                nOSError = ERROR_BAD_LENGTH;
+                            }
+                        }
+                        else
+                        {
+                            //Error
+                            nOSError = ::GetLastError();
+                        }
+                    }
+                    else
+                    {
+                        //Memory failed
+                        nOSError = ERROR_NOT_ENOUGH_MEMORY;
+                    }
+                }
+                else
+                {
+                    //File is too large
+                    nOSError = ERROR_FILE_TOO_LARGE;
+                }
+            }
+            else
+            {
+                //Error
+                nOSError = ::GetLastError();
+            }
 
-			//Close file
-			VERIFY(::CloseHandle(hFile));
-		}
-		else
-			nOSError = ::GetLastError();
+            //Close file
+            VERIFY(::CloseHandle(hFile));
+        }
+        else
+            nOSError = ::GetLastError();
         
 #elif __APPLE__
         //macOS specific
@@ -4451,88 +4451,88 @@ bool CJSON::readFileContents(LPCTSTR pStrFilePath, BYTE** ppOutData, UINT* pncbO
         else
             nOSError = errno;
 #endif
-	}
-	else
-		nOSError = ERROR_INVALID_PARAMETER;
+    }
+    else
+        nOSError = ERROR_INVALID_PARAMETER;
 
-	//See if we failed, or don't need the data returned
-	if(!bRes ||
-		!ppOutData)
-	{
-		//Free mem
-		if(pFileData)
-		{
-			delete[] pFileData;
-			pFileData = nullptr;
-		}
+    //See if we failed, or don't need the data returned
+    if(!bRes ||
+        !ppOutData)
+    {
+        //Free mem
+        if(pFileData)
+        {
+            delete[] pFileData;
+            pFileData = nullptr;
+        }
 
-		ncbSzFileData = 0;
-	}
+        ncbSzFileData = 0;
+    }
 
-	if(ppOutData)
-		*ppOutData = pFileData;
-	if(pncbOutDataSz)
-		*pncbOutDataSz = ncbSzFileData;
+    if(ppOutData)
+        *ppOutData = pFileData;
+    if(pncbOutDataSz)
+        *pncbOutDataSz = ncbSzFileData;
 
     CJSON::SetLastError(nOSError);
-	return bRes;
+    return bRes;
 }
 
 
 
 bool CJSON::readFileContentsAsString(LPCTSTR pStrFilePath, std_wstring* pOutStr, UINT ncbSzMaxFileSz)
 {
-	//Read file contents into a string
-	//INFO: Takes into account BOMs for text file encodings
-	//'pStrFilePath' = file path
-	//'pOutStr' = if not nullptr, receives the data as a string
-	//'ncbSzMaxFileSz' = if not 0, maximum allowed file size in BYTEs
-	//RETURN:
-	//		= true if success
-	//		= false if failed (check CJSON::GetLastError() for info)
+    //Read file contents into a string
+    //INFO: Takes into account BOMs for text file encodings
+    //'pStrFilePath' = file path
+    //'pOutStr' = if not nullptr, receives the data as a string
+    //'ncbSzMaxFileSz' = if not 0, maximum allowed file size in BYTEs
+    //RETURN:
+    //		= true if success
+    //		= false if failed (check CJSON::GetLastError() for info)
     bool bRes = false;
-	int nOSError = NO_ERROR;
+    int nOSError = NO_ERROR;
 
-	//Read file as BYTE string first
-	BYTE* pFileData = nullptr;
-	UINT ncbSzFileData = 0;
-	if(CJSON::readFileContents(pStrFilePath, &pFileData, &ncbSzFileData, ncbSzMaxFileSz))
-	{
+    //Read file as BYTE string first
+    BYTE* pFileData = nullptr;
+    UINT ncbSzFileData = 0;
+    if(CJSON::readFileContents(pStrFilePath, &pFileData, &ncbSzFileData, ncbSzMaxFileSz))
+    {
         int ncbSzBOM;
         JSON_ENCODING enc;
 
-		//Look for BOMs
-		if(ncbSzFileData >= 3 &&
-			pFileData[0] == 0xef &&
-			pFileData[1] == 0xbb &&
-			pFileData[2] == 0xbf)
-		{
-			//UTF-8
-			ncbSzBOM = 3;
+        //Look for BOMs
+        if(ncbSzFileData >= 3 &&
+            pFileData[0] == 0xef &&
+            pFileData[1] == 0xbb &&
+            pFileData[2] == 0xbf)
+        {
+            //UTF-8
+            ncbSzBOM = 3;
             enc = JENC_UTF_8;
-		}
-		else if(ncbSzFileData >= 2 &&
-			pFileData[0] == 0xfe &&
-			pFileData[1] == 0xff)
-		{
-			//UTF-16 BE
+        }
+        else if(ncbSzFileData >= 2 &&
+            pFileData[0] == 0xfe &&
+            pFileData[1] == 0xff)
+        {
+            //UTF-16 BE
             ncbSzBOM = 2;
             enc = JENC_UNICODE_16BE;
-		}
-		else if(ncbSzFileData >= 2 &&
-			pFileData[0] == 0xff &&
-			pFileData[1] == 0xfe)
-		{
-			//UTF-16 LE
-			ncbSzBOM = 2;
+        }
+        else if(ncbSzFileData >= 2 &&
+            pFileData[0] == 0xff &&
+            pFileData[1] == 0xfe)
+        {
+            //UTF-16 LE
+            ncbSzBOM = 2;
             enc = JENC_UNICODE_16;
-		}
-		else
-		{
-			//Treat as ASCII
+        }
+        else
+        {
+            //Treat as ASCII
             ncbSzBOM = 0;
             enc = JENC_ANSI;
-		}
+        }
         
         
         std_wstring strDummy;
@@ -4548,101 +4548,101 @@ bool CJSON::readFileContentsAsString(LPCTSTR pStrFilePath, std_wstring* pOutStr,
             nOSError = CJSON::GetLastError();
 
         
-	}
-	else
-		nOSError = CJSON::GetLastError();
+    }
+    else
+        nOSError = CJSON::GetLastError();
 
-	//Free mem
-	if(pFileData)
-	{
-		delete[] pFileData;
-		pFileData = nullptr;
-	}
+    //Free mem
+    if(pFileData)
+    {
+        delete[] pFileData;
+        pFileData = nullptr;
+    }
 
-	//Only if failed, otherwise it will be set prior
-	if(!bRes &&
-		pOutStr)
-	{
-		pOutStr->clear();
-	}
+    //Only if failed, otherwise it will be set prior
+    if(!bRes &&
+        pOutStr)
+    {
+        pOutStr->clear();
+    }
 
     CJSON::SetLastError(nOSError);
-	return bRes;
+    return bRes;
 }
 
 
 
 bool CJSON::writeFileContents(LPCTSTR pStrFilePath, const BYTE* pData, size_t ncbDataSz, const BYTE* pBOMData, size_t ncbBOMSz)
 {
-	//Write file contents from a BYTE array
-	//'pStrFilePath' = file path
-	//'pData' = if not nullptr, pointer to the BYTE array to write to file
-	//'ncbDataSz' = size of 'pData' array in BYTEs
-	//'pBOMData' = if not nullptr, points to the file BOM to use (for file encodings)
-	//'ncbBOMSz' = size of 'pBOMData' in BYTEs
-	//RETURN:
-	//		= true if success
-	//		= false if failed (check CJSON::GetLastError() for info)
+    //Write file contents from a BYTE array
+    //'pStrFilePath' = file path
+    //'pData' = if not nullptr, pointer to the BYTE array to write to file
+    //'ncbDataSz' = size of 'pData' array in BYTEs
+    //'pBOMData' = if not nullptr, points to the file BOM to use (for file encodings)
+    //'ncbBOMSz' = size of 'pBOMData' in BYTEs
+    //RETURN:
+    //		= true if success
+    //		= false if failed (check CJSON::GetLastError() for info)
     bool bRes = false;
-	int nOSError = NO_ERROR;
+    int nOSError = NO_ERROR;
 
-	if(pStrFilePath &&
-		pData)
-	{
+    if(pStrFilePath &&
+        pData)
+    {
 #ifdef _WIN32
         //Windows specific
         
-		//Open file
-		HANDLE hFile = ::CreateFile(pStrFilePath, GENERIC_READ | GENERIC_WRITE, 
-			FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-			CREATE_ALWAYS, 0, nullptr);
-		if(hFile != INVALID_HANDLE_VALUE)
-		{
-			DWORD dwcbWrtn;
+        //Open file
+        HANDLE hFile = ::CreateFile(pStrFilePath, GENERIC_READ | GENERIC_WRITE, 
+            FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+            CREATE_ALWAYS, 0, nullptr);
+        if(hFile != INVALID_HANDLE_VALUE)
+        {
+            DWORD dwcbWrtn;
 
-			//Do we have a BOM
+            //Do we have a BOM
             bool bBOMWrittenOK = true;
-			if(pBOMData &&
-				ncbBOMSz)
-			{
-				//Write BOM
-				dwcbWrtn = 0;
-				if(!::WriteFile(hFile, pBOMData, (DWORD)ncbBOMSz, &dwcbWrtn, nullptr) ||
-					dwcbWrtn != ncbBOMSz)
-				{
-					//Writing BOM failed
-					nOSError = ::GetLastError();
-					bBOMWrittenOK = false;
-				}
-			}
+            if(pBOMData &&
+                ncbBOMSz)
+            {
+                //Write BOM
+                dwcbWrtn = 0;
+                if(!::WriteFile(hFile, pBOMData, (DWORD)ncbBOMSz, &dwcbWrtn, nullptr) ||
+                    dwcbWrtn != ncbBOMSz)
+                {
+                    //Writing BOM failed
+                    nOSError = ::GetLastError();
+                    bBOMWrittenOK = false;
+                }
+            }
 
-			if(bBOMWrittenOK)
-			{
-				//Write main data
-				dwcbWrtn = 0;
-				if(::WriteFile(hFile, pData, (DWORD)ncbDataSz, &dwcbWrtn, nullptr))
-				{
-					if(ncbDataSz == dwcbWrtn)
-					{
-						//Done
-						bRes = true;
-					}
-					else
-						nOSError = ERROR_NET_WRITE_FAULT;
-				}
-				else
-					nOSError = ::GetLastError();
-			}
+            if(bBOMWrittenOK)
+            {
+                //Write main data
+                dwcbWrtn = 0;
+                if(::WriteFile(hFile, pData, (DWORD)ncbDataSz, &dwcbWrtn, nullptr))
+                {
+                    if(ncbDataSz == dwcbWrtn)
+                    {
+                        //Done
+                        bRes = true;
+                    }
+                    else
+                        nOSError = ERROR_NET_WRITE_FAULT;
+                }
+                else
+                    nOSError = ::GetLastError();
+            }
 
-			//Flush buffer
-			//INFO: To make sure the file is fully saved on disk
-			VERIFY(::FlushFileBuffers(hFile));
+            //Flush buffer
+            //INFO: To make sure the file is fully saved on disk
+            VERIFY(::FlushFileBuffers(hFile));
 
-			//Close file
-			VERIFY(::CloseHandle(hFile));
-		}
-		else
-			nOSError = ::GetLastError();
+            //Close file
+            VERIFY(::CloseHandle(hFile));
+        }
+        else
+            nOSError = ::GetLastError();
         
 #elif __APPLE__
         //macOS specific
@@ -4694,12 +4694,12 @@ bool CJSON::writeFileContents(LPCTSTR pStrFilePath, const BYTE* pData, size_t nc
         else
             nOSError = errno;
 #endif
-	}
-	else
-		nOSError = ERROR_INVALID_PARAMETER;
+    }
+    else
+        nOSError = ERROR_INVALID_PARAMETER;
 
     CJSON::SetLastError(nOSError);
-	return bRes;
+    return bRes;
 }
 
 
@@ -4713,30 +4713,30 @@ bool CJSON::writeFileContentsAsString(LPCTSTR pStrFilePath,
 #endif
                                       )
 {
-	//Write string into a file using a specified encoding
-	//INFO: It sets specific BOMs for text file encodings
-	//'pStrFilePath' = file path
-	//'pStr' = string to write
-	//'enc' = encoding to write 'pStr' in
-	//'bAllowAnyDataLoss' = true to allow to save file if conversion to the 'enc' causes some data loss, false - not to save file if data loss
-	//						INFO: Used only for lossy encoding on Windows.
-	//'pbOutDataLoss' = if not nullptr, receives true if saving file caused some data loss due to code page conversion.
+    //Write string into a file using a specified encoding
+    //INFO: It sets specific BOMs for text file encodings
+    //'pStrFilePath' = file path
+    //'pStr' = string to write
+    //'enc' = encoding to write 'pStr' in
+    //'bAllowAnyDataLoss' = true to allow to save file if conversion to the 'enc' causes some data loss, false - not to save file if data loss
+    //						INFO: Used only for lossy encoding on Windows.
+    //'pbOutDataLoss' = if not nullptr, receives true if saving file caused some data loss due to code page conversion.
     //                      INFO: Used only on Windows/
-	//RETURN:
-	//		= true if success
-	//		= false if failed (check CJSON::GetLastError() for info)
+    //RETURN:
+    //		= true if success
+    //		= false if failed (check CJSON::GetLastError() for info)
     bool bRes = false;
-	int nOSError = NO_ERROR;
+    int nOSError = NO_ERROR;
 
 #ifdef _WIN32
 //Windows specific
     bool bDataLoss = false;
 #endif
 
-	if(pStrFilePath &&
+    if(pStrFilePath &&
        pStrFilePath[0] &&
-		pStr)
-	{
+        pStr)
+    {
         //Convert to requested encoding first
         std::string strA;
         if(CJSON::getStringForEncoding(pStr->c_str(),
@@ -4833,18 +4833,18 @@ bool CJSON::writeFileContentsAsString(LPCTSTR pStrFilePath,
             //Failed to convert
             nOSError = CJSON::GetLastError();
         }
-	}
-	else
-		nOSError = ERROR_INVALID_PARAMETER;
+    }
+    else
+        nOSError = ERROR_INVALID_PARAMETER;
 
 #ifdef _WIN32
     //Windows specific
-	if(pbOutDataLoss)
-		*pbOutDataLoss = bDataLoss;
+    if(pbOutDataLoss)
+        *pbOutDataLoss = bDataLoss;
 #endif
 
     CJSON::SetLastError(nOSError);
-	return bRes;
+    return bRes;
 }
 
 
