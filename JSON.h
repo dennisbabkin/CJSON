@@ -931,51 +931,62 @@ private:
     }
 #endif
 
-    static std_wstring easyFormat(LPCTSTR pszFormat, ...)
-    {
-        //Format the string
-        //INFO: Uses the locale currently set
-        int nOSError = CJSON::GetLastError();
-        va_list args;
-        va_start(args, pszFormat);
 
-        std_wstring str;
+	static std_wstring easyFormat(LPCTSTR pszFormat, ...)
+	{
+		//Format the string
+		//INFO: Uses the locale currently set
+		int nOSError = CJSON::GetLastError();
+		va_list args;
+		va_start(args, pszFormat);
+
+		va_list args2;
+		va_copy(args2, args);
+
+		std_wstring str;
 
 #ifdef _WIN32
-        //Windows specific
-        intptr_t nSz = _vscwprintf(pszFormat, args);
-        
+		//Windows specific
+		intptr_t nSz = _vscwprintf(pszFormat, args);        
+
 #elif __APPLE__
-        //macOS specific
-        intptr_t nSz = vprintf(pszFormat, args);
+		//macOS specific
+		intptr_t nSz = vprintf(pszFormat, args);
 #endif
-        
-        if(nSz >= 0)
-        {
-            WCHAR* p_buff = new (std::nothrow) WCHAR[nSz + 1];
-            if(p_buff)
-            {
-                p_buff[0] = 0;
-                
+
+		if(nSz >= 0)
+		{
+			WCHAR* p_buff = new (std::nothrow) WCHAR[nSz + 1];
+			if(p_buff)
+			{
+				p_buff[0] = 0;
+
+
 #ifdef _WIN32
-                //Windows specific
-                vswprintf_s(p_buff, nSz + 1, pszFormat, args);
+
+				//Windows specific
+				vswprintf_s(p_buff, nSz + 1, pszFormat, args2);
+
 #elif __APPLE__
-                //macOS specific
-                vsnprintf(p_buff, nSz + 1, pszFormat, args);
+
+				//macOS specific
+				vsnprintf(p_buff, nSz + 1, pszFormat, args2);
+
 #endif
 
-                str.assign(p_buff, nSz);
+				str.assign(p_buff, nSz);
 
-                delete[] p_buff;
-            }
-        }
+				delete[] p_buff;
+			}
+		}
 
-        va_end(args);
+		va_end(args);
+		va_end(args2);
 
-        CJSON::SetLastError(nOSError);
-        return str;
-    }
+		CJSON::SetLastError(nOSError);
+
+		return str;
+	}
     static WCHAR _skipWhiteSpaces(const WCHAR* pData, intptr_t& i, intptr_t nLen);
     static int _parseForArray(JSON_ARRAY& ja, const WCHAR* pData, intptr_t& i, intptr_t nLen, JSON_ERROR* pJError);
     static int _parseForObject(JSON_OBJECT& jo, const WCHAR* pData, intptr_t& i, intptr_t nLen, JSON_ERROR* pJError);
