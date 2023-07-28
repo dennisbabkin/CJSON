@@ -1087,47 +1087,53 @@ size_t CJSON::_toString_Value(JSON_VALUE& val, JSON_FORMATTING* pJFormat, std_ws
 
 std_wstring& CJSON::appendFormat(std_wstring& str, LPCTSTR pszFormat, ...)
 {
-    //Format string the same way as wsprintf() does
-    int nOSError = CJSON::GetLastError();
-    va_list args;
-    va_start(args, pszFormat);
+	//Format string the same way as wsprintf() does
+	int nOSError = CJSON::GetLastError();
+
+	va_list args;
+	va_start(args, pszFormat);
+
+    va_list args2;
+    va_copy(args2, args);
 
 #ifdef _WIN32
+
     //Windows specific
-    intptr_t nSz = _vscwprintf(pszFormat, args);
-    
+	intptr_t nSz = _vscwprintf(pszFormat, args);
+
 #elif __APPLE__
     //macOS specific
     intptr_t nSz = vprintf(pszFormat, args);
-    
+
 #endif
 
-    if(nSz >= 0)
+	if(nSz >= 0)
     {
-        WCHAR* p_buff = new (std::nothrow) WCHAR[nSz + 1];
-        if(p_buff)
+		WCHAR* p_buff = new (std::nothrow) WCHAR[nSz + 1];
+		if(p_buff)
         {
-            p_buff[0] = 0;
-            
+			p_buff[0] = 0; 
+
 #ifdef _WIN32
             //Windows specific
-            vswprintf_s(p_buff, nSz + 1, pszFormat, args);
+			vswprintf_s(p_buff, nSz + 1, pszFormat, args2);
 #elif __APPLE__
             //macOS specific
-            vsnprintf(p_buff, nSz + 1, pszFormat, args);
+            vsnprintf(p_buff, nSz + 1, pszFormat, args2);
 #endif
+			remove_nulls_from_str(p_buff, (size_t&)nSz);
+			str.append(p_buff, nSz);
 
-            remove_nulls_from_str(p_buff, (size_t&)nSz);
-            str.append(p_buff, nSz);
-
-            delete[] p_buff;
-        }
-    }
+			delete[] p_buff;
+		}
+	}
 
     va_end(args);
+    va_end(args2);
 
     CJSON::SetLastError(nOSError);
-    return str;
+
+	return str;
 }
 
 WCHAR* CJSON::remove_nulls_from_str(WCHAR* p_str, size_t& szch)
